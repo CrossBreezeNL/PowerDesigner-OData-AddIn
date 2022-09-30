@@ -1,0 +1,1 @@
+"C:\Windows\Microsoft.NET\Framework\v4.0.30319\RegAsm.exe" "C:\Program Files (x86)\SAP\PowerDesigner 16\Add-ins\OData\CrossBreeze.Tools.PowerDesigner.AddIn.OData.dll" /tlb /codebase
