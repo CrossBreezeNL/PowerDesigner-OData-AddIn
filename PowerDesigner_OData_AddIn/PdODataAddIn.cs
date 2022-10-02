@@ -11,6 +11,12 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
         // A reference to the PowerDesigner Application object.
         private PdCommon.Application _app;
 
+        // A reference to the PowerDesigner logger object.
+        private PdLogger _logger;
+
+        const string UPDATE_MODEL_FROM_ODATA_METADATA_COMMAND = "UpdateModelFromOdataMetadata";
+        const string UPDATE_MODEL_FROM_ODATA_METADATA_CAPTION = "Update model from OData metadata";
+
         /// <summary>
         /// Constructor.
         /// </summary>
@@ -31,28 +37,100 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
             try
             {
                 this._app = (PdCommon.Application)pApplication;
-                Info("Succesfully initialized OData AddIn");
+                this._logger = new PdLogger(this._app);
+                _logger.Info("Succesfully initialized OData AddIn");
             }
             catch (Exception e)
             {
                 // Write exception in the PowerDesigner output window.
-                Error(String.Format("An exception occurred during intitialize of OData AddIn: {0}", e.Message));
+                _logger.Error(String.Format("An exception occurred during intitialize of OData AddIn: {0}", e.Message));
             }
         }
 
+        /// <summary>
+        /// From: https://help.sap.com/docs/SAP_POWERDESIGNER/31c48596e34446a68956e0aa7e700a2e/c7d62f7d6e1b1014b6b5cd497c583efb.html
+        /// This functions is invoked each time PowerDesigner needs to display a menu, and returns an XML text that describes the menu items to display.
+        /// It is called once without an object parameter at the initialization of PowerDesigner to fill the Import and Reverse menus.
+        /// When you right-click a symbol in a diagram, this method is called twice: once for the object and once for the symbol.
+        /// Thus, you can create a method that is only called on graphical contextual menus.
+        /// </summary>
+        /// <param name="sMenu">This can be BrowserNode or Object</param>
+        /// <param name="pObject"></param>
+        /// <returns></returns>
         public string ProvideMenuItems(string sMenu, object pObject)
         {
-            throw new NotImplementedException();
+            _logger.Debug(String.Format("ProvideMenuItems [sMenu='{0}'; pObject={1}]", sMenu, _logger.PDObjectToString(pObject)));
+
+            // Get the class kind of the current object.
+            int pObjectClassKind = ((PdCommon.BaseObject)pObject).ClassKind;
+
+            // If the current object is a PDM model, return the menu option.
+            if (pObjectClassKind == (int)PdPDM.PdPDM_Classes.cls_Model)
+            {
+                return String.Format("<Menu><Command Name=\"{0}\" Caption=\"{1}\" /></Menu>", UPDATE_MODEL_FROM_ODATA_METADATA_COMMAND, UPDATE_MODEL_FROM_ODATA_METADATA_CAPTION);
+            }
+
+            // If nothing has return yet, return an empty string.
+            return "";
         }
 
+        /// <summary>
+        /// From: https://help.sap.com/docs/SAP_POWERDESIGNER/31c48596e34446a68956e0aa7e700a2e/c7d62f7d6e1b1014b6b5cd497c583efb.html
+        /// This function allows you to dynamically disable commands defined in a menu. The method must return true to enable a command and false to disable it.
+        /// </summary>
+        /// <param name="sMenu"></param>
+        /// <param name="pObject"></param>
+        /// <param name="sCommandName"></param>
+        /// <returns></returns>
         public int IsCommandSupported(string sMenu, object pObject, string sCommandName)
         {
-            throw new NotImplementedException();
+            _logger.Debug(String.Format("IsCommandSupported [sMenu='{0}'; pObject={1}; sCommandName='{2}']", sMenu, _logger.PDObjectToString(pObject), sCommandName));
+
+            // Get the class kind of the current object.
+            int pObjectClassKind = ((PdCommon.BaseObject)pObject).ClassKind;
+
+            // If the current object is a PDM model, return the menu option.
+            if (pObjectClassKind == (int)PdPDM.PdPDM_Classes.cls_Model && sCommandName.Equals(UPDATE_MODEL_FROM_ODATA_METADATA_COMMAND))
+            {
+                return 1;
+            }
+
+            // If nothing has return yet, return an false.
+            return 0;
         }
 
+        /// <summary>
+        /// From: https://help.sap.com/docs/SAP_POWERDESIGNER/31c48596e34446a68956e0aa7e700a2e/c7d62f7d6e1b1014b6b5cd497c583efb.html
+        /// This function implements the execution of a command designated by its name.
+        /// </summary>
+        /// <param name="sMenu"></param>
+        /// <param name="pObject"></param>
+        /// <param name="sCommandName"></param>
         public void DoCommand(string sMenu, object pObject, string sCommandName)
         {
-            throw new NotImplementedException();
+            // Wrap the whole DoCommand in a generic Try-Catch since exceptions are not handled by the Com Add-In automatically. The Add-In will stop working at that point.
+            try
+            {
+
+                _logger.Debug(String.Format("DoCommand [sMenu='{0}'; pObject={1}; sCommandName='{2}']", sMenu, _logger.PDObjectToString(pObject), sCommandName));
+
+                // Get the class kind of the current object.
+                int pObjectClassKind = ((PdCommon.BaseObject)pObject).ClassKind;
+
+                // If the current object is a PDM model, return the menu option.
+                if (pObjectClassKind == (int)PdPDM.PdPDM_Classes.cls_Model && sCommandName.Equals(UPDATE_MODEL_FROM_ODATA_METADATA_COMMAND))
+                {
+                    // Update the model here...
+                    PdPDM.Model pdmModel = (PdPDM.Model)pObject;
+                    new PdODataModelUpdater(this._logger).UpdatePdmModel(pdmModel);
+                }
+
+            }
+            catch (Exception e)
+            {
+                // When an Exception is thrown in C# via ActiveX it is not handled, so this way we log an error in the PowerDesigner Script output.
+                _logger.Error(string.Format("Exception was thrown during DoCommand [sMenu='{0}'; pObject={1}; sCommandName='{2}']: {3}", sMenu, _logger.PDObjectToString(pObject), sCommandName, e.Message));
+            }
         }
 
         /// <summary>
@@ -61,50 +139,11 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
         /// </summary>
         public void Uninitialize()
         {
-            Debug("Uninitialize []");
+            _logger.Debug("Uninitialize []");
             // Unset the reference to the PowerDesigner Application object.
             // Not sure if this is needed, but just to be sure it can't be used anymore.
             this._app = null;
-        }
-
-        /// <summary>
-        /// Helper method to write a info message in the PowerDesigner output window.
-        /// </summary>
-        /// <param name="message">The info message to write in the PowerDesigner output window</param>
-        private void Info(String message)
-        {
-            this.Log(message, "INFO");
-        }
-
-        /// <summary>
-        /// Helper method to write a error message in the PowerDesigner output window.
-        /// </summary>
-        /// <param name="message">The error message to write in the PowerDesigner output window</param>
-        private void Error(String message)
-        {
-            this.Log(message, "ERROR");
-        }
-
-        /// <summary>
-        /// Helper method to write a debug message in the PowerDesigner output window.
-        /// </summary>
-        /// <param name="message">The debug message to write in the PowerDesigner output window</param>
-        private void Debug(String message)
-        {
-            this.Log(message, "DEBUG");
-        }
-
-        /// <summary>
-        /// Helper method to write a log message in the PowerDesigner output window.
-        /// </summary>
-        /// <param name="message">The message to write in the PowerDesigner output window</param>
-        private void Log(String message, String level)
-        {
-            // Only write to the Output if we have a handle on the PowerDesigner application.
-            if (this._app != null)
-                this._app.Output(String.Format("[OData-AddIn {0}] {1}", level, message));
-            else
-                Console.WriteLine(String.Format("[OData-AddIn {0}] {1}", level, message));
+            this._logger = null;
         }
     }
 }

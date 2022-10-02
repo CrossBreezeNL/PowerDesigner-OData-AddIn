@@ -18,4 +18,5 @@ Now you can enable the AddIn in PowerDesigner in Tools -> General Options -> Add
 - https://help.sap.com/docs/SAP_POWERDESIGNER/31c48596e34446a68956e0aa7e700a2e/c7d0294d6e1b1014b766cb40bbc4f211.html?version=16.7.02&locale=en-US
 
 ## OData
-- OData Example: https://services.odata.org/V3/(S(vpc4ccste5w1knelbjartlds))/OData/OData.svc/$metadata
+- OData Examples: https://pragmatiqa.com/xodata/odatadir.html
+- https://learn.microsoft.com/nl-nl/odata/
