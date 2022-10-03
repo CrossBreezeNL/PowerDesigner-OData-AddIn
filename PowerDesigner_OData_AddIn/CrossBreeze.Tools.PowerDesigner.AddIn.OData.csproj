@@ -34,9 +34,9 @@
   <PropertyGroup>
     <SignAssembly>true</SignAssembly>
   </PropertyGroup>
-  <PropertyGroup>
+  <!--<PropertyGroup>
     <AssemblyOriginatorKeyFile>PowerDesigner_OData_AddIn_SigningKey.pfx</AssemblyOriginatorKeyFile>
-  </PropertyGroup>
+  </PropertyGroup>-->
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -56,7 +56,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
-    <None Include="PowerDesigner_OData_AddIn_SigningKey.pfx" />
+    <!--<None Include="PowerDesigner_OData_AddIn_SigningKey.pfx" />-->
   </ItemGroup>
   <ItemGroup>
     <COMReference Include="PdAddInTypLib">
