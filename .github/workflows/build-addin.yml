@@ -9,9 +9,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    - name: Add msbuild to PATH
+      uses: microsoft/setup-msbuild@v1.1
     - name: Restore dependencies
-      run: dotnet restore
+      run: msbuild -t:restore
     - name: Build
-      run: dotnet build --no-restore
+      run: msbuild PowerDesigner_OData_AddIn.sln -verbosity:diag -property:Configuration=Debug
     #- name: Test
     #  run: dotnet test --no-build --verbosity normal
