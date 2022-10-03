@@ -1,0 +1,15 @@
+name: Build-AddIn
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: windows-2019 # Use Windows 2019 image since this one has the .NET Framework 4.7.2 pre-installed.
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Restore dependencies
+      run: dotnet restore
+    - name: Build
+      run: dotnet build --no-restore
