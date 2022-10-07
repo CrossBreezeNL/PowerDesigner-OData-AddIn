@@ -33,4 +33,5 @@ jobs:
     - name: Publish installer
       uses: actions/upload-artifact@v3
       with:
+        name: PD_OData_AddIn_${{ github.ref_name }}_${{ github.run_number }}_${{ github.run_attempt }}
         path: PowerDesigner_OData_AddIn_Setup/Release/PowerDesigner_OData_AddIn_Setup.msi
