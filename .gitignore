@@ -1,0 +1,9 @@
+bin
+obj
+.vs
+*.user
+
+# The packages folder can be ignored because of Package Restore
+**/[Pp]ackages/*
+**/Debug
+**/Release

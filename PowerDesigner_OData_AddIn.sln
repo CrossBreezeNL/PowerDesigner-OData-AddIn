@@ -1,0 +1,29 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.32510.428
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CrossBreeze.Tools.PowerDesigner.AddIn.OData", "PowerDesigner_OData_AddIn\CrossBreeze.Tools.PowerDesigner.AddIn.OData.csproj", "{669E7D12-509B-441B-A15C-A7B69C991413}"
+EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "PowerDesigner_OData_AddIn_Setup", "PowerDesigner_OData_AddIn_Setup\PowerDesigner_OData_AddIn_Setup.vdproj", "{1F31D4DB-3026-4739-83D7-A1228BEE9740}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{669E7D12-509B-441B-A15C-A7B69C991413}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{669E7D12-509B-441B-A15C-A7B69C991413}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{669E7D12-509B-441B-A15C-A7B69C991413}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{669E7D12-509B-441B-A15C-A7B69C991413}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1F31D4DB-3026-4739-83D7-A1228BEE9740}.Debug|Any CPU.ActiveCfg = Debug
+		{1F31D4DB-3026-4739-83D7-A1228BEE9740}.Release|Any CPU.ActiveCfg = Release
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {DF6232A0-8648-486A-AEB5-61AEDA7A0CEA}
+	EndGlobalSection
+EndGlobal
