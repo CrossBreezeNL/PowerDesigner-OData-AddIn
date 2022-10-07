@@ -44,15 +44,15 @@
   </PropertyGroup>-->
   <ItemGroup>
     <Reference Include="Interop.PdAddInTypLib">
-      <HintPath>lib\PowerDesigner\x64\Interop.PdAddInTypLib.dll</HintPath>
+      <HintPath>lib\\Interop.PdAddInTypLib.dll</HintPath>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
     <Reference Include="Interop.PdCommon">
-      <HintPath>lib\PowerDesigner\x64\Interop.PdCommon.dll</HintPath>
+      <HintPath>lib\Interop.PdCommon.dll</HintPath>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
     <Reference Include="Interop.PdPDM">
-      <HintPath>lib\PowerDesigner\x64\Interop.PdPDM.dll</HintPath>
+      <HintPath>lib\Interop.PdPDM.dll</HintPath>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
     <Reference Include="System" />
