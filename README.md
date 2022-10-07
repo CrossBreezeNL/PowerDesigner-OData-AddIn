@@ -1,6 +1,8 @@
+[![GitHub license](https://img.shields.io/github/license/CrossBreezeNL/PowerDesigner-OData-AddIn)](https://github.com/CrossBreezeNL/PowerDesigner-OData-AddIn/blob/main/LICENSE)
+[![GitHub issues](https://img.shields.io/github/issues/CrossBreezeNL/PowerDesigner-OData-AddIn)](https://github.com/CrossBreezeNL/PowerDesigner-OData-AddIn/issues)
 [![main build status](https://github.com/CrossBreezeNL/PowerDesigner-OData-AddIn/actions/workflows/main.yml/badge.svg)](https://github.com/CrossBreezeNL/PowerDesigner-OData-AddIn/actions/workflows/main.yml)
 [![feature build status](https://github.com/CrossBreezeNL/PowerDesigner-OData-AddIn/actions/workflows/feature.yml/badge.svg)](https://github.com/CrossBreezeNL/PowerDesigner-OData-AddIn/actions/workflows/feature.yml)
-![GitHub commits](https://img.shields.io/github/commit-activity/m/CrossBreezeNL/PowerDesigner-OData-AddIn)
+[![GitHub commits](https://img.shields.io/github/commit-activity/m/CrossBreezeNL/PowerDesigner-OData-AddIn)](https://github.com/CrossBreezeNL/PowerDesigner-OData-AddIn/graphs/commit-activity)
 
 # PowerDesigner-OData-AddIn
 An AddIn for PowerDesigner to synchronize OData metadata with a PDM model
