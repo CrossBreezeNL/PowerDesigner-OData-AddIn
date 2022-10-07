@@ -9,27 +9,37 @@ defaults:
 jobs:
   build:
 
-    runs-on: windows-2019 # Use Windows 2019 image since this one has the .NET Framework 4.7.2 pre-installed.
+    # Use Windows 2019 image since this one has the .NET Framework 4.7.2 pre-installed.
+    # https://github.com/actions/runner-images/blob/main/images/win/Windows2019-Readme.md
+    runs-on: windows-2019
 
     env:
+      # Environment variable which points to the VS 2019 IDE folder.
       VS_COMMON_IDE_PATH: C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/Common7/IDE
 
-    steps:	
+    steps:
+    # Checkout the code.
     - uses: actions/checkout@v3
+    # Add msbuild to the path so we can execute it.
     - name: Add msbuild to PATH
       uses: microsoft/setup-msbuild@v1.1
+    # Restore the solution depencies (NuGet restore).
     - name: Restore dependencies
       run: msbuild -t:restore
+    # Build the solution (without installer).
     - name: Build assembly
       run: |
         msbuild PowerDesigner_OData_AddIn.sln -property:Configuration=Release
+    # Prepare the build-container to be able to build visual studio setup projects.
     - name: Prepare installer build
       run: |
         DisableOutOfProcBuild.exe
       working-directory: ${{env.VS_COMMON_IDE_PATH}}/CommonExtensions/Microsoft/VSI/DisableOutOfProcBuild
+    # Build the setup project using devenv.
     - name: Build installer
       run: |
         "%VS_COMMON_IDE_PATH%\devenv.com" "PowerDesigner_OData_AddIn.sln" /Build Release /project PowerDesigner_OData_AddIn_Setup
+    # Publish the installer as a build artifact.
     - name: Publish installer
       uses: actions/upload-artifact@v3
       with:
