@@ -6,9 +6,11 @@ runs:
     - uses: actions/checkout@v3
     # Add msbuild to the path so we can execute it.
     - name: Add msbuild to PATH
+      shell: cmd
       uses: microsoft/setup-msbuild@v1.1
     # Restore the solution depencies (NuGet restore).
     - name: Restore dependencies
+      shell: cmd
       run: msbuild -t:restore
     # Build the solution (without installer).
     - name: Build assembly
