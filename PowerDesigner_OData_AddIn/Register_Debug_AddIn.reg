@@ -1,0 +1,8 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Sybase\PowerDesigner 16\Addins\OData]
+"Class"="CrossBreeze.Tools.PowerDesigner.AddIn.OData.PdODataAddIn"
+"Enable"="No"
+"Type"="ActiveX"
+"File"="C:\\GIT\\Repos\\CrossBreeze\\PowerDesigner-OData-AddIn\\PowerDesigner_OData_AddIn\\bin\\Debug\\CrossBreeze.Tools.PowerDesigner.AddIn.OData.dll"
+"Registered"="yes"

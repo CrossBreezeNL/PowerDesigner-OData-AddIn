@@ -79,4 +79,10 @@
     </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>if $(ConfigurationName) == Debug (
+  echo Registering Debug version of Add-In for PowerDesigner in Windows Registry...
+  reg import $(ProjectDir)Register_Debug_AddIn.reg
+)</PostBuildEvent>
+  </PropertyGroup>
 </Project>

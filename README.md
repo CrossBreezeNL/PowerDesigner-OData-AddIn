@@ -17,7 +17,6 @@ To debug the plugin:
 
 - Open this solution in Visual Studio which is running as Administator (so it can register new DLLs)
 - Build the project in Debug.
-- Run the RegisterAddIn - Debug.reg file to register the path in the registry (You only need to do this once, not on every build).
 
 Now you can enable the AddIn in PowerDesigner in Tools -> General Options -> Add-Ins
 

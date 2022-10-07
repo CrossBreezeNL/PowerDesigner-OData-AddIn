@@ -7,6 +7,10 @@
 "LanguageId" = "3:1033"
 "CodePage" = "3:1252"
 "UILanguageId" = "3:1033"
+"SccProjectName" = "8:"
+"SccLocalPath" = "8:"
+"SccAuxPath" = "8:"
+"SccProvider" = "8:"
     "Hierarchy"
     {
         "Entry"
@@ -186,12 +190,6 @@
         "Entry"
         {
         "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_8410AE40F10730DC9FAA9BCB97CDABD2"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_UNDEFINED"
         "OwnerKey" = "8:_4B2D84A67F1E41BF9E6BD783A8AC40F9"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -246,12 +244,6 @@
         "Entry"
         {
         "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_1AFE034F021B3A7B506456184397FF80"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_UNDEFINED"
         "OwnerKey" = "8:_B4E8E3C63DDD8D9D25DE012578BE808C"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -271,6 +263,18 @@
         {
         "MsmKey" = "8:_UNDEFINED"
         "OwnerKey" = "8:_FAAC65D1060B7208669BC36599556A17"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_UNDEFINED"
+        "OwnerKey" = "8:_8410AE40F10730DC9FAA9BCB97CDABD2"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_UNDEFINED"
+        "OwnerKey" = "8:_1AFE034F021B3A7B506456184397FF80"
         "MsmSig" = "8:_UNDEFINED"
         }
     }
@@ -919,9 +923,9 @@
         "Product"
         {
         "Name" = "8:Microsoft Visual Studio"
-        "ProductName" = "8:PowerDesigner OData AddIn"
+        "ProductName" = "8:PowerDesigner OData Add-In"
         "ProductCode" = "8:{E2DE22AF-4625-4FAF-BB67-699174628967}"
-        "PackageCode" = "8:{9E4FCC03-F14F-4D78-A396-06A06718201E}"
+        "PackageCode" = "8:{DA9E538C-9517-4D73-A022-5E8F99B5CE0A}"
         "UpgradeCode" = "8:{69527C48-8042-4FF6-B5BE-DDEAB055932C}"
         "AspNetVersion" = "8:"
         "RestartWWWService" = "11:FALSE"
@@ -932,7 +936,7 @@
         "Manufacturer" = "8:CrossBreeze"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:"
-        "Title" = "8:PowerDesigner OData AddIn Setup"
+        "Title" = "8:PowerDesigner OData Add-In Setup"
         "Subject" = "8:"
         "ARPCONTACT" = "8:CrossBreeze"
         "Keywords" = "8:"
