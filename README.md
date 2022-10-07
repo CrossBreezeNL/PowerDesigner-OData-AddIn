@@ -8,7 +8,7 @@
 An AddIn for PowerDesigner to synchronize OData metadata with a PDM model
 
 # Installation
-In order to use the plugin, execute the [installer](./PowerDesigner_OData_AddIn_Setup/Release/PowerDesigner_OData_AddIn_Setup.msi) to install the PowerDesigner Add-In on your machine.
+In order to use the plugin, execute the MSI installer which can be downloaded as a build artifact on the latest stable [main build](https://github.com/CrossBreezeNL/PowerDesigner-OData-AddIn/actions/workflows/feature.yml).
 
 Make sure to restart PowerDesigner after the installation. Then open Tools -> General Options -> Add-Ins and enable the 'OData' Add-In (by ticking the tick box before it).
 
