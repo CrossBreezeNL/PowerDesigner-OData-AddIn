@@ -21,12 +21,15 @@ jobs:
     - name: Restore dependencies
       run: msbuild -t:restore
     - name: Build assembly
-      run: msbuild PowerDesigner_OData_AddIn.sln -property:Configuration=Release
+      run: |
+        msbuild PowerDesigner_OData_AddIn.sln -property:Configuration=Release
     - name: Prepare installer build
-      working-directory: %VS_COMMON_IDE_PATH%/CommonExtensions/Microsoft/VSI/DisableOutOfProcBuild
-      run: DisableOutOfProcBuild.exe
+      run: |
+        DisableOutOfProcBuild.exe
+      working-directory: ${{env.VS_COMMON_IDE_PATH}}/CommonExtensions/Microsoft/VSI/DisableOutOfProcBuild
     - name: Build installer
-      run: "%VS_COMMON_IDE_PATH%\devenv.com" "PowerDesigner_OData_AddIn.sln" /Build Release /project PowerDesigner_OData_AddIn_Setup
+      run: |
+        "%VS_COMMON_IDE_PATH%\devenv.com" "PowerDesigner_OData_AddIn.sln" /Build Release /project PowerDesigner_OData_AddIn_Setup
     - name: Publish installer
       uses: actions/upload-artifact@v3
       with:
