@@ -34,10 +34,7 @@
     <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup>
-    <SignAssembly>true</SignAssembly>
-  </PropertyGroup>
-  <PropertyGroup>
-    <AssemblyOriginatorKeyFile>PowerDesigner_OData_AddIn_SigningKey.pfx</AssemblyOriginatorKeyFile>
+    <SignAssembly>false</SignAssembly>
   </PropertyGroup>
   <!--<PropertyGroup>
     <AssemblyOriginatorKeyFile>PowerDesigner_OData_AddIn_SigningKey.pfx</AssemblyOriginatorKeyFile>
