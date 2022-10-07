@@ -15,4 +15,4 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     # Use the build-assembly action.
-    - uses: ./.github/build-assembly
+    - uses: ./.github/actions/build-assembly
