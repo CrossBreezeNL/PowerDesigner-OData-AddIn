@@ -1,0 +1,18 @@
+name: feature
+
+on:
+  push:
+    branches:
+      - feature/*
+
+jobs:
+  build:
+
+    # Use Windows 2019 image since this one has the .NET Framework 4.7.2 pre-installed.
+    # https://github.com/actions/runner-images/blob/main/images/win/Windows2019-Readme.md
+    runs-on: windows-2019
+
+    steps:
+    - uses: actions/checkout@v3
+    # Use the build-assembly action.
+    - uses: ./.github/build-assembly
