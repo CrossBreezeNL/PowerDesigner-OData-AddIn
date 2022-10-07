@@ -21,4 +21,4 @@ jobs:
     - name: Build installer
       shell: cmd
       run: |
-        "%MSBUILD_PATH%" "PowerDesigner_OData_AddIn.sln" /build Release /project PowerDesigner_OData_AddIn_Setup
+        "%DEVENV_PATH%" "PowerDesigner_OData_AddIn.sln" /Build Release /project PowerDesigner_OData_AddIn_Setup
