@@ -2,13 +2,17 @@ name: Build-AddIn
 
 on: [push]
 
+defaults:
+  run:
+    shell: cmd
+
 jobs:
   build:
 
     runs-on: windows-2019 # Use Windows 2019 image since this one has the .NET Framework 4.7.2 pre-installed.
 
     env:
-      VS_COMMON_IDE_PATH: C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Common7\IDE
+      VS_COMMON_IDE_PATH: C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/Common7/IDE
 
     steps:	
     - uses: actions/checkout@v3
@@ -19,14 +23,10 @@ jobs:
     - name: Build assembly
       run: msbuild PowerDesigner_OData_AddIn.sln -property:Configuration=Release
     - name: Prepare installer build
-      shell: cmd
-      run: |
-        CALL DisableOutOfProcBuild.exe
-      working-directory: %VS_COMMON_IDE_PATH%\CommonExtensions\Microsoft\VSI\DisableOutOfProcBuild\
+      working-directory: %VS_COMMON_IDE_PATH%/CommonExtensions/Microsoft/VSI/DisableOutOfProcBuild
+      run: DisableOutOfProcBuild.exe
     - name: Build installer
-      shell: cmd
-      run: |
-        "%VS_COMMON_IDE_PATH%\devenv.com" "PowerDesigner_OData_AddIn.sln" /Build Release /project PowerDesigner_OData_AddIn_Setup
+      run: "%VS_COMMON_IDE_PATH%\devenv.com" "PowerDesigner_OData_AddIn.sln" /Build Release /project PowerDesigner_OData_AddIn_Setup
     - name: Publish installer
       uses: actions/upload-artifact@v3
       with:
