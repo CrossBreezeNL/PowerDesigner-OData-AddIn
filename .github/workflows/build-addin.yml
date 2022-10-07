@@ -22,3 +22,7 @@ jobs:
       shell: cmd
       run: |
         "%DEVENV_PATH%" "PowerDesigner_OData_AddIn.sln" /Build Release /project PowerDesigner_OData_AddIn_Setup
+    - name: Publish installer
+      uses: actions/upload-artifact@v3
+      with:
+        path: PowerDesigner_OData_AddIn_Setup/Release/PowerDesigner_OData_AddIn_Setup.msi
