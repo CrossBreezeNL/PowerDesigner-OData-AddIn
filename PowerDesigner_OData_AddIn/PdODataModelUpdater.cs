@@ -13,6 +13,9 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
         // A reference to the PowerDesigner logger object.
         private PdLogger _logger;
 
+        // A reference to the PowerDesigner Application object.
+        private PdCommon.Application _app;
+
         // Store the reference to the OData metadata Uri.
         // List of public OData APIs: https://pragmatiqa.com/xodata/odatadir.html
         private string _odataMetadataUri = "https://denhaag.incijfers.nl/jiveservices/odata/$metadata";
@@ -21,9 +24,10 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
         /// Constructor.
         /// </summary>
         /// <param name="logger">PdLogger reference to log in PowerDesigner.</param>
-        public PdODataModelUpdater(PdLogger logger)
+        public PdODataModelUpdater(PdLogger logger, PdCommon.Application app)
         {
             this._logger = logger;
+            this._app = app;
         }
 
         /// <summary>
@@ -36,6 +40,10 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
 
             // Set protocol to Tls 1.2 to solve SSL/TLS error.
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+
+            PdPDM.Model oImportDataModel = (PdPDM.Model)this._app.CreateModel(((int)PdPDM.PdPDM_Classes.cls_Model), null, PdCommon.OpenModelFlags.omf_Hidden);
+            oImportDataModel.Name = pdmModel.Name;
+            oImportDataModel.Code = pdmModel.Code;
 
             // Create an xml reader on the metadata uri.
             using (XmlReader oDataMetadataXmlReader = XmlReader.Create(_odataMetadataUri))
@@ -56,10 +64,28 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
                             IEdmEntityType entityType = edmEntitySet.EntityType();
                             _logger.Debug(string.Format(" =EntityType[Name={0}; IsAbstract={1}]", entityType.Name, entityType.IsAbstract));
 
-                            // Loop overthe declared properties.
-                            foreach (IEdmProperty edmProperty in entityType.DeclaredProperties)
+                            // If the entity type is not abstract, create a table for it.
+                            if (!entityType.IsAbstract)
                             {
-                                _logger.Debug(string.Format(" -Property[Name={0}; PropertyKind={1}; Type={2}]", edmProperty.Name, Enum.GetName(typeof(EdmPropertyKind), edmProperty.PropertyKind), edmProperty.Type.FullName()));
+                                // Create a new PDM table object for the EntityType.
+                                PdPDM.Table pdmTable = (PdPDM.Table)oImportDataModel.Tables.CreateNew();
+                                pdmTable.Name = entityType.Name;
+                                pdmTable.SetNameToCode();
+
+                                // Loop overthe declared properties.
+                                foreach (IEdmProperty edmProperty in entityType.DeclaredProperties)
+                                {
+                                    // Create a new columns for the property.
+                                    PdPDM.Column pdmColumn = (PdPDM.Column)pdmTable.Columns.CreateNew();
+                                    pdmColumn.Name = edmProperty.Name;
+                                    pdmColumn.SetNameToCode();
+                                    // Add the new columns to the columns collection.
+                                    pdmTable.Columns.Add(pdmColumn);
+
+                                    _logger.Debug(string.Format(" -Property[Name={0}; PropertyKind={1}; Type={2}]", edmProperty.Name, Enum.GetName(typeof(EdmPropertyKind), edmProperty.PropertyKind), edmProperty.Type.FullName()));
+                                }
+                                // Add the new table to the tables collection.
+                                oImportDataModel.Tables.Add(pdmTable);
                             }
                         }
                     }
@@ -75,6 +101,19 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
                 }
 
             }
+
+            if (oImportDataModel.Tables.Count > 0)
+            {
+                // Merge the created OData import data model into the target pdm model.
+                _logger.Debug("Merging the OData metadata changes into the PDM model");
+                pdmModel.Merge(oImportDataModel, ((int)PdCommon.MergeActions.mrg_allchanges - (int)PdCommon.MergeActions.mrg_deleted - (int)PdCommon.MergeActions.mrg_remove));
+            } else
+            {
+                _logger.Error("No tables where created based on the OData metadata");
+            }
+
+            // Delete the the temporary model.
+            oImportDataModel.delete();
         }
     }
 }

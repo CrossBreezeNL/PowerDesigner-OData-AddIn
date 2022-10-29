@@ -122,7 +122,7 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
                 {
                     // Update the model here...
                     PdPDM.Model pdmModel = (PdPDM.Model)pObject;
-                    new PdODataModelUpdater(this._logger).UpdatePdmModel(pdmModel);
+                    new PdODataModelUpdater(this._logger, this._app).UpdatePdmModel(pdmModel);
                 }
 
             }
