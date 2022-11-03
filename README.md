@@ -12,6 +12,8 @@ In order to use the plugin, execute the MSI installer which can be downloaded as
 
 Make sure to restart PowerDesigner after the installation. Then open Tools -> General Options -> Add-Ins and enable the 'OData' Add-In (by ticking the tick box before it).
 
+![General options - Add-In](./screenshots/general-options-addins.png)
+
 ## Usage
 In the following sections the usage of the Add In is explained.
 ### Reverse engineer OData
