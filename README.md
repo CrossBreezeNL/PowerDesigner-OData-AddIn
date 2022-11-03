@@ -17,10 +17,10 @@ In the following sections the usage of the Add In is explained.
 ### Reverse engineer OData
 In order to reverse engineer an OData feed follow the following steps:
 1. In the main menu of PowerDesigner click on `File` > `Reverse Engineer` > `OData...`.
-![PowerDesigner Reverse Engineer OData](./screenshots/file-reverse-engineer-odata.png)
+   ![PowerDesigner Reverse Engineer OData](./screenshots/file-reverse-engineer-odata.png)
 1. A model dialog will popup to ask for the new model name, this will be the name of the new Physical Data Model containing the structure of the OData feed.
 1. Another model dialog will popup where you can fill in the $metadata URI for the OData feed.
-![OData $metadata URI](./screenshots/model-dialog-metadata-uri.png)
+   ![OData $metadata URI](./screenshots/model-dialog-metadata-uri.png)
 
 After the previous steps are completed a new PDM model will be created in the active workspace and will be populated with tables (with columns) based on the metadata of the OData feed.
 
