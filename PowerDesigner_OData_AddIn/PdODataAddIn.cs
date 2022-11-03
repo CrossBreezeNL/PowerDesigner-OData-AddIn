@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using PdAddInTypLib;
+using System.Windows.Forms;
+
 
 namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
 {
@@ -13,6 +15,12 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
 
         // A reference to the PowerDesigner logger object.
         private PdLogger _logger;
+
+        const string MENU_REVERSE_ENGINEER = "Reverse";
+        const string MENU_OBJECT = "Object";
+
+        const string REVERSE_ENGINEER_ODATA_METADATA_COMMAND = "ReverseEngineerFromOdataMetadata";
+        const string REVERSE_ENGINEER_ODATA_METADATA_CAPTION = "OData...";
 
         const string UPDATE_MODEL_FROM_ODATA_METADATA_COMMAND = "UpdateModelFromOdataMetadata";
         const string UPDATE_MODEL_FROM_ODATA_METADATA_CAPTION = "Update model from OData metadata";
@@ -59,15 +67,41 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
         /// <returns></returns>
         public string ProvideMenuItems(string sMenu, object pObject)
         {
-            _logger.Debug(String.Format("ProvideMenuItems [sMenu='{0}'; pObject={1}]", sMenu, _logger.PDObjectToString(pObject)));
-
-            // Get the class kind of the current object.
-            int pObjectClassKind = ((PdCommon.BaseObject)pObject).ClassKind;
-
-            // If the current object is a PDM model, return the menu option.
-            if (pObjectClassKind == (int)PdPDM.PdPDM_Classes.cls_Model)
+            // Wrap the whole ProvideMenuItems in a generic Try-Catch since exceptions are not handled by the Com Add-In automatically. The Add-In will stop working at that point.
+            try
             {
-                return String.Format("<Menu><Command Name=\"{0}\" Caption=\"{1}\" /></Menu>", UPDATE_MODEL_FROM_ODATA_METADATA_COMMAND, UPDATE_MODEL_FROM_ODATA_METADATA_CAPTION);
+                _logger.Debug(String.Format("ProvideMenuItems [sMenu='{0}'; pObject={1}]", sMenu, _logger.PDObjectToString(pObject)));
+
+                // If the pObject is not set the Import or Reverse menu items are requested.
+                if (pObject == null)
+                {
+                    // If the requested menu is the 'Reverse Engineer' menu, return the OData reverse engineer option.
+                    if (sMenu.Equals(MENU_REVERSE_ENGINEER))
+                    {
+                        return String.Format("<Menu><Command Name=\"{0}\" Caption=\"{1}\" /></Menu>", REVERSE_ENGINEER_ODATA_METADATA_COMMAND, REVERSE_ENGINEER_ODATA_METADATA_CAPTION);
+                    }
+                }
+                // If the pObject is set we provide menu items based on the object type.
+                else if(sMenu.Equals(MENU_OBJECT))
+                {
+                    // Get the class kind of the current object.
+                    int pObjectClassKind = ((PdCommon.BaseObject)pObject).ClassKind;
+
+                    // If the current object is a PDM model, return the menu option.
+                    if (pObjectClassKind == (int)PdPDM.PdPDM_Classes.cls_Model)
+                    {
+                        // The update is only possible if the model has a OData Metadata file.
+                        if (PdODataModelUpdater.HasODataMetadataFile((PdPDM.Model)pObject))
+                        {
+                            return String.Format("<Menu><Command Name=\"{0}\" Caption=\"{1}\" /></Menu>", UPDATE_MODEL_FROM_ODATA_METADATA_COMMAND, UPDATE_MODEL_FROM_ODATA_METADATA_CAPTION);
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                // When an Exception is thrown in C# via ActiveX it is not handled, so this way we log an error in the PowerDesigner Script output.
+                _logger.Error(string.Format("Exception was thrown during ProvideMenuItems [sMenu='{0}'; pObject={1}]: {2}", sMenu, _logger.PDObjectToString(pObject), e.Message));
             }
 
             // If nothing has return yet, return an empty string.
@@ -84,15 +118,39 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
         /// <returns></returns>
         public int IsCommandSupported(string sMenu, object pObject, string sCommandName)
         {
-            _logger.Debug(String.Format("IsCommandSupported [sMenu='{0}'; pObject={1}; sCommandName='{2}']", sMenu, _logger.PDObjectToString(pObject), sCommandName));
-
-            // Get the class kind of the current object.
-            int pObjectClassKind = ((PdCommon.BaseObject)pObject).ClassKind;
-
-            // If the current object is a PDM model, return the menu option.
-            if (pObjectClassKind == (int)PdPDM.PdPDM_Classes.cls_Model && sCommandName.Equals(UPDATE_MODEL_FROM_ODATA_METADATA_COMMAND))
+            // Wrap the whole IsCommandSupported in a generic Try-Catch since exceptions are not handled by the Com Add-In automatically. The Add-In will stop working at that point.
+            try
             {
-                return 1;
+                _logger.Debug(String.Format("IsCommandSupported [sMenu='{0}'; pObject={1}; sCommandName='{2}']", sMenu, _logger.PDObjectToString(pObject), sCommandName));
+
+                // If the object is null it is either for the Import or Reverse menu.
+                if (pObject == null)
+                {
+                    // Check whether the request command is reverse engineering OData.
+                    if (sMenu.Equals(MENU_REVERSE_ENGINEER) && sCommandName.Equals(REVERSE_ENGINEER_ODATA_METADATA_COMMAND))
+                    {
+                        return 1;
+                    }
+                }
+                else if (sMenu.Equals(MENU_OBJECT))
+                {
+                    // Get the class kind of the current object.
+                    int pObjectClassKind = ((PdCommon.BaseObject)pObject).ClassKind;
+
+                    // If the current object is a PDM model, return the menu option.
+                    if (pObjectClassKind == (int)PdPDM.PdPDM_Classes.cls_Model && sCommandName.Equals(UPDATE_MODEL_FROM_ODATA_METADATA_COMMAND))
+                    {
+                        // The update is only possible if the model has a OData Metadata file.
+                        if (PdODataModelUpdater.HasODataMetadataFile((PdPDM.Model)pObject)) {
+                            return 1;
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                // When an Exception is thrown in C# via ActiveX it is not handled, so this way we log an error in the PowerDesigner Script output.
+                _logger.Error(string.Format("Exception was thrown during IsCommandSupported [sMenu='{0}'; pObject={1}; sCommandName='{2}']: {3}", sMenu, _logger.PDObjectToString(pObject), sCommandName, e.Message));
             }
 
             // If nothing has return yet, return an false.
@@ -111,18 +169,55 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
             // Wrap the whole DoCommand in a generic Try-Catch since exceptions are not handled by the Com Add-In automatically. The Add-In will stop working at that point.
             try
             {
-
                 _logger.Debug(String.Format("DoCommand [sMenu='{0}'; pObject={1}; sCommandName='{2}']", sMenu, _logger.PDObjectToString(pObject), sCommandName));
 
-                // Get the class kind of the current object.
-                int pObjectClassKind = ((PdCommon.BaseObject)pObject).ClassKind;
-
-                // If the current object is a PDM model, return the menu option.
-                if (pObjectClassKind == (int)PdPDM.PdPDM_Classes.cls_Model && sCommandName.Equals(UPDATE_MODEL_FROM_ODATA_METADATA_COMMAND))
+                // If the pObject is null it is either and Import or Reverse command.
+                if (pObject == null)
                 {
-                    // Update the model here...
-                    PdPDM.Model pdmModel = (PdPDM.Model)pObject;
-                    new PdODataModelUpdater(this._logger, this._app).UpdatePdmModel(pdmModel);
+                    // Check whether the request command is reverse engineering OData.
+                    if (sMenu.Equals(MENU_REVERSE_ENGINEER) && sCommandName.Equals(REVERSE_ENGINEER_ODATA_METADATA_COMMAND))
+                    {
+                        _logger.Debug("Reverse engineer OData command is invoked...");
+
+                        // Get a pointer to the PowerDesigner main window so we can show message boxes on top of it.
+                        NativeWindow pdWindow = NativeWindow.FromHandle((IntPtr)this._app.MainWindowHandle);
+                        // Ask the user to enter the URI of the OData metadata feed.
+                        string strODataModelName = "";
+                        if (InputBoxHelper.InputBox(pdWindow, "Reverse Engineer OData - Model name", "Please enter the name for the new model:", ref strODataModelName) == DialogResult.OK)
+                        {
+                            _logger.Debug(String.Format("strODataModelName='{0}'", strODataModelName));
+                            string strODataMetadataUri = "";
+                            if (InputBoxHelper.InputBox(pdWindow, "Reverse Engineer OData - OData URI", "Please enter the OData $metadata URI:", ref strODataMetadataUri) == DialogResult.OK)
+                            {
+                                _logger.Debug(String.Format("strODataMetadataUri='{0}'", strODataMetadataUri));
+                                PdPDM.Model pdmModel = new PdODataModelUpdater(this._logger, this._app).CreatePdmModelFromODataMetadata(strODataModelName, strODataMetadataUri, false);
+                            }
+                        }
+                        
+                    }
+                }
+                // All other commands are pObject specific, and thus not null.
+                else if (sMenu.Equals(MENU_OBJECT))
+                {
+                    // Get the class kind of the current object.
+                    int pObjectClassKind = ((PdCommon.BaseObject)pObject).ClassKind;
+
+                    // If the current object is a PDM model, return the menu option.
+                    if (pObjectClassKind == (int)PdPDM.PdPDM_Classes.cls_Model && sCommandName.Equals(UPDATE_MODEL_FROM_ODATA_METADATA_COMMAND))
+                    {
+                        // Update the model here...
+                        PdPDM.Model pdmModel = (PdPDM.Model)pObject;
+
+                        PdCommon.FileObject oDataMetadataFile = PdODataModelUpdater.GetODataMetadataFile(pdmModel);
+                        if (oDataMetadataFile == null)
+                        {
+                            _logger.Debug(string.Format("The model {0} doesn't have a OData metadata file!", pdmModel.DisplayName));
+                            return;
+                        }
+
+                        // Update the current model from the Uri from the file reference.
+                        new PdODataModelUpdater(this._logger, this._app).UpdatePdmModel(pdmModel, oDataMetadataFile.Location);
+                    }
                 }
 
             }
