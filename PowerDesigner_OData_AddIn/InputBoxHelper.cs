@@ -26,16 +26,12 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
 
             Label label = new Label();
             label.Text = promptText;
-            buttonOk.TabIndex = 0;
             label.SetBounds(DIALOG_MARGIN, DIALOG_MARGIN, fieldWidth, LABEL_HEIGHT);
             label.AutoSize = true;
 
             TextBox textBox = new TextBox();
+            textBox.TabIndex = 0;
             textBox.SetBounds(DIALOG_MARGIN, DIALOG_MARGIN + LABEL_HEIGHT, fieldWidth, TEXTBOX_HEIGHT);
-
-            // Create a panel for the buttons.
-            FlowLayoutPanel buttonPanel = new FlowLayoutPanel();
-            buttonPanel.FlowDirection = FlowDirection.LeftToRight;
 
             int buttonRowY = DIALOG_MARGIN + LABEL_HEIGHT + TEXTBOX_HEIGHT;
             Button buttonOk = new Button();
@@ -43,15 +39,12 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
             buttonOk.TabIndex = 1;
             buttonOk.DialogResult = DialogResult.OK;
             buttonOk.SetBounds(((fieldWidth / 2) - BUTTON_WIDTH), buttonRowY, BUTTON_WIDTH, BUTTON_HEIGHT);
-            buttonPanel.Controls.Add(buttonOk);
-
 
             Button buttonCancel = new Button();
             buttonCancel.Text = "Cancel";
             buttonOk.TabIndex = 2;
             buttonCancel.DialogResult = DialogResult.Cancel;
             buttonCancel.SetBounds(((fieldWidth / 2) + DIALOG_MARGIN), buttonRowY, BUTTON_WIDTH, BUTTON_HEIGHT);
-            buttonPanel.Controls.Add(buttonCancel);
 
             form.Controls.AddRange(new Control[] { label, textBox, buttonOk, buttonCancel });
             form.AcceptButton = buttonOk;
