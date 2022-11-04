@@ -18,6 +18,10 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
         /// <param name="message">The debug message to write in the PowerDesigner output window</param>
         public string PDObjectToString(object pObject)
         {
+            // If the pObject is null return an empty string.
+            if (pObject == null)
+                return "null";
+
             PdCommon.BaseObject pdBaseObject = (PdCommon.BaseObject)pObject;
             if (pdBaseObject is PdCommon.NamedObject pdNamedObject)
             {

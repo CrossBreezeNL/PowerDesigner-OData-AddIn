@@ -10,35 +10,89 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
 {
     public class PdODataModelUpdater
     {
+        // Name of the metadata file.
+        const string ODATA_METADATA_FILE_NAME = "OData Metadata";
+        const string ODATA_METADATA_FILE_CODE = "ODATA_METADATA";
+
         // A reference to the PowerDesigner logger object.
         private PdLogger _logger;
 
-        // Store the reference to the OData metadata Uri.
-        // List of public OData APIs: https://pragmatiqa.com/xodata/odatadir.html
-        private string _odataMetadataUri = "https://denhaag.incijfers.nl/jiveservices/odata/$metadata";
+        // A reference to the PowerDesigner Application object.
+        private PdCommon.Application _app;
 
         /// <summary>
         /// Constructor.
         /// </summary>
         /// <param name="logger">PdLogger reference to log in PowerDesigner.</param>
-        public PdODataModelUpdater(PdLogger logger)
+        public PdODataModelUpdater(PdLogger logger, PdCommon.Application app)
         {
             this._logger = logger;
+            this._app = app;
         }
 
         /// <summary>
-        /// Update a Pdm Model from a OData $metadata Uri.
+        /// Function to retrieve the OData Metadata file from a PDM model (if it exists, otherwise null).
+        /// </summary>
+        /// <param name="pdmModel">The PDM model to check</param>
+        /// <returns></returns>
+        public static PdCommon.FileObject GetODataMetadataFile(PdPDM.Model pdmModel)
+        {
+            var oDataMetadataFile = pdmModel.FindChildByCode(PdODataModelUpdater.ODATA_METADATA_FILE_CODE, (int)PdCommon.PdCommon_Classes.cls_FileObject);
+            if (oDataMetadataFile == null)
+            {
+                return null;
+            }
+            return (PdCommon.FileObject)oDataMetadataFile;
+        }
+
+        /// <summary>
+        /// Method to chech whether a PDM model has a OData Metadata file.
         /// </summary>
         /// <param name="pdmModel"></param>
-        public void UpdatePdmModel(PdPDM.Model pdmModel)
+        /// <returns></returns>
+        public static bool HasODataMetadataFile(PdPDM.Model pdmModel)
         {
-            _logger.Info(string.Format("Updating the model '{0}' from OData metadata", pdmModel.DisplayName));
+            return GetODataMetadataFile(pdmModel) != null;
+        }
+
+        /// <summary>
+        /// Create a new PdPDM model with the passed name based on the oData metadata feed.
+        /// </summary>
+        /// <param name="pdmModelName"></param>
+        /// <param name="oDataMetadataUri"></param>
+        /// <returns></returns>
+        public PdPDM.Model CreatePdmModelFromODataMetadata(string pdmModelName, string oDataMetadataUri, bool hiddenModel = true)
+        {
+            _logger.Info(string.Format("CreatePdmModelFromODataMetadata[pdmModelName={0}; oDataMetadataUri={1}; hiddenModel={2}]", pdmModelName, oDataMetadataUri, hiddenModel));
 
             // Set protocol to Tls 1.2 to solve SSL/TLS error.
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
 
+            // Derive on how to open the model, it's hidden by default.
+            PdCommon.OpenModelFlags openFlags = PdCommon.OpenModelFlags.omf_Default;
+            if (hiddenModel)
+                openFlags = PdCommon.OpenModelFlags.omf_Hidden;
+
+            // Create a new PDM model.
+            PdPDM.Model oImportDataModel = (PdPDM.Model)this._app.CreateModel(((int)PdPDM.PdPDM_Classes.cls_Model), "", openFlags);
+            // Set the name of the model.
+            oImportDataModel.Name = pdmModelName;
+            oImportDataModel.SetNameToCode();
+
+            // Store the metadata uri in a file object in the model.
+            PdCommon.FileObject metaDataFile = (PdCommon.FileObject)oImportDataModel.Files.CreateNew();
+            metaDataFile.SetNameAndCode(ODATA_METADATA_FILE_NAME, ODATA_METADATA_FILE_CODE);
+            // Set the file type to URI.
+            metaDataFile.LocationType = 2;
+            // Set the URI value.
+            metaDataFile.Location = oDataMetadataUri;
+            // Disable generation of the file.
+            metaDataFile.Generated = false;
+            // Add the file to the model.
+            oImportDataModel.Files.Add((PdPDM.BaseObject)metaDataFile);
+
             // Create an xml reader on the metadata uri.
-            using (XmlReader oDataMetadataXmlReader = XmlReader.Create(_odataMetadataUri))
+            using (XmlReader oDataMetadataXmlReader = XmlReader.Create(oDataMetadataUri))
             {
                 // Try to parse the uri to a edm model.
                 if (CsdlReader.TryParse(oDataMetadataXmlReader, out IEdmModel model, out IEnumerable<EdmError> errors))
@@ -56,10 +110,28 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
                             IEdmEntityType entityType = edmEntitySet.EntityType();
                             _logger.Debug(string.Format(" =EntityType[Name={0}; IsAbstract={1}]", entityType.Name, entityType.IsAbstract));
 
-                            // Loop overthe declared properties.
-                            foreach (IEdmProperty edmProperty in entityType.DeclaredProperties)
+                            // If the entity type is not abstract, create a table for it.
+                            if (!entityType.IsAbstract)
                             {
-                                _logger.Debug(string.Format(" -Property[Name={0}; PropertyKind={1}; Type={2}]", edmProperty.Name, Enum.GetName(typeof(EdmPropertyKind), edmProperty.PropertyKind), edmProperty.Type.FullName()));
+                                // Create a new PDM table object for the EntityType.
+                                PdPDM.Table pdmTable = (PdPDM.Table)oImportDataModel.Tables.CreateNew();
+                                pdmTable.Name = entityType.Name;
+                                pdmTable.SetNameToCode();
+
+                                // Loop overthe declared properties.
+                                foreach (IEdmProperty edmProperty in entityType.DeclaredProperties)
+                                {
+                                    // Create a new columns for the property.
+                                    PdPDM.Column pdmColumn = (PdPDM.Column)pdmTable.Columns.CreateNew();
+                                    pdmColumn.Name = edmProperty.Name;
+                                    pdmColumn.SetNameToCode();
+                                    // Add the new columns to the columns collection.
+                                    pdmTable.Columns.Add(pdmColumn);
+
+                                    _logger.Debug(string.Format(" -Property[Name={0}; PropertyKind={1}; Type={2}]", edmProperty.Name, Enum.GetName(typeof(EdmPropertyKind), edmProperty.PropertyKind), edmProperty.Type.FullName()));
+                                }
+                                // Add the new table to the tables collection.
+                                oImportDataModel.Tables.Add(pdmTable);
                             }
                         }
                     }
@@ -75,6 +147,27 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
                 }
 
             }
+
+            return oImportDataModel;
+        }
+
+        /// <summary>
+        /// Update a Pdm Model from a OData $metadata Uri.
+        /// </summary>
+        /// <param name="pdmModel"></param>
+        public void UpdatePdmModel(PdPDM.Model pdmModel, string oDataMetadataUri)
+        {
+            _logger.Info(string.Format("Updating the model '{0}' from OData metadata", pdmModel.DisplayName));
+
+            // Create an in-memory model based on the OData metadata.
+            PdPDM.Model oImportDataModel = CreatePdmModelFromODataMetadata(pdmModel.Name, oDataMetadataUri);
+
+            // Merge the created OData import data model into the target pdm model.
+            _logger.Debug("Merging the OData metadata changes into the PDM model");
+            pdmModel.Merge(oImportDataModel, ((int)PdCommon.MergeActions.mrg_allchanges - (int)PdCommon.MergeActions.mrg_deleted - (int)PdCommon.MergeActions.mrg_remove));
+
+            // Delete the the temporary model.
+            oImportDataModel.delete();
         }
     }
 }
