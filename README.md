@@ -54,7 +54,7 @@ To debug the plugin:
 - Open the [solution](./PowerDesigner_OData_AddIn.sln) in Visual Studio which is running as Administator (so it can register new DLLs)
 - Build the project in Debug (this will also register the Add-In in the Windows Registry for PowerDesigner).
 
-Now you can enable the Add-In in PowerDesigner in Tools -> General Options -> Add-Ins. The name of the Add-In is 'OData'. Note that for debugging, PowerDesigner should also be run as Administrator.
+Now you can enable the Add-In in PowerDesigner in Tools -> General Options -> Add-Ins. The name of the Add-In is 'OData'. If the OData add-in is disabled in PowerDesigner (checkbox is grayed out) it might be needed to run PowerDesigner as Administrator.
 
 ## Resources
 
