@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Net;
 using System.Xml;
-using Microsoft.OData.Edm;
-using Microsoft.OData.Edm.Csdl;
-using Microsoft.OData.Edm.Validation;
+using System.Xml.Linq;
 
 namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
 {
@@ -58,8 +55,9 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
         /// <summary>
         /// Create a new PdPDM model with the passed name based on the oData metadata feed.
         /// </summary>
-        /// <param name="pdmModelName"></param>
-        /// <param name="oDataMetadataUri"></param>
+        /// <param name="pdmModelName">The name of the PDM model to create.</param>
+        /// <param name="oDataMetadataUri">The URI of the OData metadata feed.</param>
+        /// <param name="hiddenModel">Whether the model should be created as hidden.</param>
         /// <returns></returns>
         public PdPDM.Model CreatePdmModelFromODataMetadata(string pdmModelName, string oDataMetadataUri, bool hiddenModel = true)
         {
@@ -91,61 +89,59 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
             // Add the file to the model.
             oImportDataModel.Files.Add((PdPDM.BaseObject)metaDataFile);
 
+            // Load the OData metadata into an XDocument.
+            XDocument oDataMetadataDocument = XDocument.Load(oDataMetadataUri);
+                
+            // Move to the content, so we can read the root element information.
+            //oDataMetadataXmlReader.MoveToContent();
+            _logger.Debug(string.Format("XML root element: LocalName='{0}';NamespaceURI='{1}';HasAttributes={2}", oDataMetadataDocument.Root.Name.LocalName, oDataMetadataDocument.Root.Name.NamespaceName, oDataMetadataDocument.Root.HasAttributes));
+
+            // The root element local name must be Edmx, if now, throw an exception.
+            if (!oDataMetadataDocument.Root.Name.LocalName.Equals("Edmx", StringComparison.CurrentCultureIgnoreCase))
+                throw new PdODataException(string.Format("The document at '{0}' doesn't have a Edmx root element, which is required for OData $metadata! The root element is '{1}'.", oDataMetadataUri, oDataMetadataDocument.Root.Name.LocalName));
+
+            // If the root element local-name is Edmx we take the namespace of that element.
+            string edmxNamespaceUri = oDataMetadataDocument.Root.Name.NamespaceName;
+
+            // Find the version attribute on the root element.
+            XAttribute versionAttribute = oDataMetadataDocument.Root.Attribute(XName.Get("Version"));
+            if (versionAttribute == null)
+                throw new PdODataException("The root Edmx element doesn't have the required 'Version' attribute!");
+
+            // Get the Edmx Version of the document.
+            string oDataVersionString = versionAttribute.Value;
+
+            // If the version string is empty, the OData feed is invalid.
+            if (oDataVersionString == null)
+                throw new PdODataException("The root Edmx element doesn't have a value for the 'Version' attribute!");
+
+            // Log which version was retrieved from the OData feed.
+            _logger.Info(string.Format("Succesfully read OData version from feed (Version='{0}').", oDataVersionString));
+
+            // Try to parse the retrieved version number to an int.
+            double oDataVersion;
+            if (!Double.TryParse(oDataVersionString, out oDataVersion))
+                throw new PdODataException(string.Format("The OData metadata version format is not supported! The retrieved format is '{0}', expected a numeric value between 1.0 and 4.0.", oDataVersionString));
+
             // Create an xml reader on the metadata uri.
-            using (XmlReader oDataMetadataXmlReader = XmlReader.Create(oDataMetadataUri))
+            using (XmlReader oDataMetadataXmlReader = oDataMetadataDocument.CreateReader())
             {
-                // Try to parse the uri to a edm model.
-                if (CsdlReader.TryParse(oDataMetadataXmlReader, out IEdmModel model, out IEnumerable<EdmError> errors))
+                // For the V4 OData Metadata we use the Microsoft.OData.Edm package.
+                if (((int)oDataVersion) == 4)
                 {
-                    // Loop through the schema elements in the model.
-                    //_logger.Debug(string.Format("EntityContainer[Name={0}; Location={1}]", model.EntityContainer.Name, model.EntityContainer.Location()));
-                    // Loop through the schema elements in the model.
-                    foreach (IEdmEntityContainerElement entityContainerElement in model.EntityContainer.Elements)
-                    {
-                        _logger.Debug(string.Format(" EntityContainerElement[ContainerElementKind={0}; Name={1}; Location={2}]", Enum.GetName(typeof(EdmContainerElementKind), entityContainerElement.ContainerElementKind), entityContainerElement.Name, entityContainerElement.Location()));
-                        if (entityContainerElement.ContainerElementKind.Equals(EdmContainerElementKind.EntitySet))
-                        {
-                            IEdmEntitySet edmEntitySet = (IEdmEntitySet)entityContainerElement;
-                            _logger.Debug(string.Format(" =EntitySet[ContainerElementKind={0}; Name={1}]", Enum.GetName(typeof(EdmContainerElementKind), edmEntitySet.ContainerElementKind), edmEntitySet.Name));
-                            IEdmEntityType entityType = edmEntitySet.EntityType();
-                            _logger.Debug(string.Format(" =EntityType[Name={0}; IsAbstract={1}]", entityType.Name, entityType.IsAbstract));
-
-                            // If the entity type is not abstract, create a table for it.
-                            if (!entityType.IsAbstract)
-                            {
-                                // Create a new PDM table object for the EntityType.
-                                PdPDM.Table pdmTable = (PdPDM.Table)oImportDataModel.Tables.CreateNew();
-                                pdmTable.Name = entityType.Name;
-                                pdmTable.SetNameToCode();
-
-                                // Loop overthe declared properties.
-                                foreach (IEdmProperty edmProperty in entityType.DeclaredProperties)
-                                {
-                                    // Create a new columns for the property.
-                                    PdPDM.Column pdmColumn = (PdPDM.Column)pdmTable.Columns.CreateNew();
-                                    pdmColumn.Name = edmProperty.Name;
-                                    pdmColumn.SetNameToCode();
-                                    // Add the new columns to the columns collection.
-                                    pdmTable.Columns.Add(pdmColumn);
-
-                                    _logger.Debug(string.Format(" -Property[Name={0}; PropertyKind={1}; Type={2}]", edmProperty.Name, Enum.GetName(typeof(EdmPropertyKind), edmProperty.PropertyKind), edmProperty.Type.FullName()));
-                                }
-                                // Add the new table to the tables collection.
-                                oImportDataModel.Tables.Add(pdmTable);
-                            }
-                        }
-                    }
+                    // Create the pdm objects based on the OData v4 feed.
+                    PdODataV4Helper.CreatePdmObjects(oDataMetadataXmlReader, oImportDataModel, this._logger);
                 }
-                // If an error occurred while trying to parse the edm model, log the error(s).
+                // For the V1 - V3 OData Metadata we use the Microsoft.Data.Edm package.
+                else if ((int)oDataVersion >= 1 && (int)oDataVersion <= 3)
+                {
+                    // Create the pdm objects based on the OData v1-3 feed.
+                    PdODataV3Helper.CreatePdmObjects(oDataMetadataXmlReader, oImportDataModel, this._logger);
+                }
                 else
                 {
-                    _logger.Error("Errors occured while parsing the OData metadata:");
-                    foreach (EdmError edmError in errors)
-                    {
-                        _logger.Error(string.Format(" [{0}] {1} @{2}", edmError.ErrorCode, edmError.ErrorMessage, edmError.ErrorLocation));
-                    }
+                    throw new PdODataException(string.Format("The OData metadata version is not supported! The retrieved version is {0}, expected a value between 1 and 4.", oDataVersion));
                 }
-
             }
 
             return oImportDataModel;
