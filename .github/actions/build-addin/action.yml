@@ -51,9 +51,11 @@ runs:
         PRODUCT_VERSION: ${{ steps.gitversion.outputs.fullSemVer }}
       shell: pwsh
       run: |
-        $vdprojFile = "PowerDesigner_OData_AddIn_Setup/PowerDesigner_OData_AddIn_Setup.vdproj"
-        $vdprojProductVersion = $env:PRODUCT_VERSION
-        (Get-Content $vdprojFile) -replace '\"ProductVersion\" = \"8\:[0-9]+(\.([0-9]+)){1,3}\"', '"ProductVersion" = "8:' + $vdprojProductVersion + '"' | Set-Content $vdprojFile
+        $vdprojFile                = "PowerDesigner_OData_AddIn_Setup/PowerDesigner_OData_AddIn_Setup.vdproj"
+        $vdprojProductVersion      = $env:PRODUCT_VERSION
+        $productVersionPattern     = '\"ProductVersion\" = \"8\:[0-9]+(\.([0-9]+)){1,3}\"'
+        $productVersionReplacement = '"ProductVersion" = "8:' + $vdprojProductVersion + '"'
+        (Get-Content $vdprojFile) -replace $productVersionPattern, $productVersionReplacement | Set-Content $vdprojFile
       if: ${{ inputs.build_msi }}
     # Build the setup project using devenv.
     - name: Build installer
