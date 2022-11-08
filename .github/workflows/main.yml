@@ -17,6 +17,11 @@ jobs:
       VS_COMMON_IDE_PATH: C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/Common7/IDE
 
     steps:
+    # Checkout the code.
+    - uses: actions/checkout@v3
+      # For the GitVersion to execute successfully, we need the checkout to fetch all gistory for all tags and branches (with fetch-depth: 0).
+      with:
+        fetch-depth: 0
     # Use the build-assembly action.
     - uses: ./.github/actions/build-assembly
     # Prepare the build-container to be able to build visual studio setup projects.
