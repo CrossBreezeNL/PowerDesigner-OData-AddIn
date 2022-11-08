@@ -22,31 +22,7 @@ jobs:
       # For the GitVersion to execute successfully, we need the checkout to fetch all gistory for all tags and branches (with fetch-depth: 0).
       with:
         fetch-depth: 0
-    # Use the build-assembly action.
-    - uses: ./.github/actions/build-assembly
-    # Prepare the build-container to be able to build visual studio setup projects.
-    - name: Prepare installer build
-      shell: cmd
-      run: |
-        DisableOutOfProcBuild.exe
-      working-directory: ${{env.VS_COMMON_IDE_PATH}}/CommonExtensions/Microsoft/VSI/DisableOutOfProcBuild
-    # Update ProductVersion for Setup Project.
-    - name: Update ProductVersion for Installer
-      env:
-        PRODUCT_VERSION: ${{ steps.gitversion.outputs.fullSemVer }}
-      shell: pwsh
-      run: |
-        $vdprojFile = "PowerDesigner_OData_AddIn_Setup/PowerDesigner_OData_AddIn_Setup.vdproj"
-        $vdprojProductVersion = $env:PRODUCT_VERSION
-        (Get-Content $vdprojFile) -replace '\"ProductVersion\" = \"8\:[0-9]+(\.([0-9]+)){1,3}\"', "ProductVersion" = "8:' + $vdprojProductVersion + '"' } | Set-Content $vdprojFile
-    # Build the setup project using devenv.
-    - name: Build installer
-      shell: cmd
-      run: |
-        "%VS_COMMON_IDE_PATH%\devenv.com" "PowerDesigner_OData_AddIn.sln" /Build Release /project PowerDesigner_OData_AddIn_Setup
-    # Publish the installer as a build artifact.
-    - name: Publish installer
-      uses: actions/upload-artifact@v3
+    # Use the build-addin action.
+    - uses: ./.github/actions/build-addin
       with:
-        name: PD_OData_AddIn_${{ steps.gitversion.outputs.fullSemVer }}
-        path: PowerDesigner_OData_AddIn_Setup/Release/PowerDesigner_OData_AddIn_Setup.msi
+        build_msi: true
