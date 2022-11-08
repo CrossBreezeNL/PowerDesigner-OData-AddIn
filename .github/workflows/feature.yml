@@ -6,7 +6,7 @@ on:
       build_msi:
         description: 'Build Installer'
         required: false
-        default: true
+        default: false
         type: boolean
   push:
     branches:
@@ -32,4 +32,4 @@ jobs:
     # Use the build-addin action.
     - uses: ./.github/actions/build-addin
       with:
-        build_msi: ${{ inputs.build_msi }}
+        build_msi: true # ${{ inputs.build_msi }}
