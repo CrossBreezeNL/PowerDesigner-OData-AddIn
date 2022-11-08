@@ -25,6 +25,7 @@ runs:
       with:
         updateAssemblyInfo: true
     - name: Display GitVersion outputs
+      shell: cmd
       run: |
         echo "Major: ${{ steps.gitversion.outputs.major }}"
         echo "Minor: ${{ steps.gitversion.outputs.minor }}"

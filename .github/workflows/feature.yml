@@ -13,6 +13,5 @@ jobs:
     runs-on: windows-2019
 
     steps:
-    - uses: actions/checkout@v3
     # Use the build-assembly action.
     - uses: ./.github/actions/build-assembly
