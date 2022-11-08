@@ -5,7 +5,8 @@ on:
     inputs:
       build_msi:
         description: 'Build Installer'
-        required: true
+        required: false
+        default: false
         type: boolean
 
 runs:
