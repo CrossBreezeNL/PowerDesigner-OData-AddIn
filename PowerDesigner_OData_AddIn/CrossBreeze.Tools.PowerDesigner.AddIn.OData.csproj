@@ -68,7 +68,10 @@
     <Compile Include="InputBoxHelper.cs" />
     <Compile Include="PdLogger.cs" />
     <Compile Include="PdODataAddIn.cs" />
+    <Compile Include="PdODataException.cs" />
     <Compile Include="PdODataModelUpdater.cs" />
+    <Compile Include="PdODataV3Helper.cs" />
+    <Compile Include="PdODataV4Helper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -77,6 +80,9 @@
     <!--<None Include="PowerDesigner_OData_AddIn_SigningKey.pfx" />-->
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Microsoft.Data.Edm">
+      <Version>5.8.5</Version>
+    </PackageReference>
     <PackageReference Include="Microsoft.OData.Edm">
       <Version>7.12.3</Version>
     </PackageReference>
