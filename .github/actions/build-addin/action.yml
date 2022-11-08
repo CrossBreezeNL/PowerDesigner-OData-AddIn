@@ -1,13 +1,12 @@
 name: build-addin
+description: 'Build the PowerDesigner Add-In and (optionally) create and publishes the installer.'
 
-on:
-  workflow_dispatch:
-    inputs:
-      build_msi:
-        description: 'Build Installer'
-        required: false
-        default: false
-        type: boolean
+inputs:
+  build_msi:
+    description: 'Build Installer'
+    required: false
+    default: false
+    type: boolean
 
 runs:
   using: "composite"
