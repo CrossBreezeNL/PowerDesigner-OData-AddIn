@@ -26,6 +26,15 @@ jobs:
       run: |
         DisableOutOfProcBuild.exe
       working-directory: ${{env.VS_COMMON_IDE_PATH}}/CommonExtensions/Microsoft/VSI/DisableOutOfProcBuild
+    # Update ProductVersion for Setup Project.
+    - name: Update ProductVersion for Installer
+      env:
+        PRODUCT_VERSION: ${{ steps.gitversion.outputs.fullSemVer }}
+      shell: pwsh
+      run: |
+        $vdprojFile = "PowerDesigner_OData_AddIn_Setup/PowerDesigner_OData_AddIn_Setup.vdproj"
+        $vdprojProductVersion = $env:PRODUCT_VERSION
+        (Get-Content $vdprojFile) -replace '\"ProductVersion\" = \"8\:[0-9]+(\.([0-9]+)){1,3}\"', "ProductVersion" = "8:' + $vdprojProductVersion + '"' } | Set-Content $vdprojFile
     # Build the setup project using devenv.
     - name: Build installer
       shell: cmd
@@ -35,5 +44,5 @@ jobs:
     - name: Publish installer
       uses: actions/upload-artifact@v3
       with:
-        name: PD_OData_AddIn_${{ github.run_number }}_${{ github.run_attempt }}
+        name: PD_OData_AddIn_${{ steps.gitversion.outputs.fullSemVer }}
         path: PowerDesigner_OData_AddIn_Setup/Release/PowerDesigner_OData_AddIn_Setup.msi
