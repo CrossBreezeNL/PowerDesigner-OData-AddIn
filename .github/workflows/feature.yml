@@ -1,6 +1,13 @@
 name: feature
 
 on:
+  workflow_dispatch:
+    inputs:
+      build_msi:
+        description: 'Build Installer'
+        required: false
+        default: false
+        type: boolean
   push:
     branches:
       - feature/*
@@ -12,7 +19,17 @@ jobs:
     # https://github.com/actions/runner-images/blob/main/images/win/Windows2019-Readme.md
     runs-on: windows-2019
 
+    env:
+      # Environment variable which points to the VS 2019 IDE folder.
+      VS_COMMON_IDE_PATH: C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/Common7/IDE
+
     steps:
+    # Checkout the code.
     - uses: actions/checkout@v3
-    # Use the build-assembly action.
-    - uses: ./.github/actions/build-assembly
+      # For the GitVersion to execute successfully, we need the checkout to fetch all gistory for all tags and branches (with fetch-depth: 0).
+      with:
+        fetch-depth: 0
+    # Use the build-addin action.
+    - uses: ./.github/actions/build-addin
+      with:
+        build_msi: ${{ inputs.build_msi }}

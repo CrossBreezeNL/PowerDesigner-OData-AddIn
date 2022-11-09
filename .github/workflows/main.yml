@@ -1,6 +1,13 @@
 name: main
 
 on:
+  workflow_dispatch:
+    inputs:
+      build_msi:
+        description: 'Build Installer'
+        required: false
+        default: true
+        type: boolean
   push:
     branches:
       - main
@@ -17,23 +24,12 @@ jobs:
       VS_COMMON_IDE_PATH: C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/Common7/IDE
 
     steps:
+    # Checkout the code.
     - uses: actions/checkout@v3
-    # Use the build-assembly action.
-    - uses: ./.github/actions/build-assembly
-    # Prepare the build-container to be able to build visual studio setup projects.
-    - name: Prepare installer build
-      shell: cmd
-      run: |
-        DisableOutOfProcBuild.exe
-      working-directory: ${{env.VS_COMMON_IDE_PATH}}/CommonExtensions/Microsoft/VSI/DisableOutOfProcBuild
-    # Build the setup project using devenv.
-    - name: Build installer
-      shell: cmd
-      run: |
-        "%VS_COMMON_IDE_PATH%\devenv.com" "PowerDesigner_OData_AddIn.sln" /Build Release /project PowerDesigner_OData_AddIn_Setup
-    # Publish the installer as a build artifact.
-    - name: Publish installer
-      uses: actions/upload-artifact@v3
+      # For the GitVersion to execute successfully, we need the checkout to fetch all gistory for all tags and branches (with fetch-depth: 0).
       with:
-        name: PD_OData_AddIn_${{ github.run_number }}_${{ github.run_attempt }}
-        path: PowerDesigner_OData_AddIn_Setup/Release/PowerDesigner_OData_AddIn_Setup.msi
+        fetch-depth: 0
+    # Use the build-addin action.
+    - uses: ./.github/actions/build-addin
+      with:
+        build_msi: ${{ inputs.build_msi }}
