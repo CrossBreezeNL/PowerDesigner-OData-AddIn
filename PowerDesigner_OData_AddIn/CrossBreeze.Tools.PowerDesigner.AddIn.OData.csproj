@@ -91,7 +91,7 @@
   <PropertyGroup>
     <PostBuildEvent>if $(ConfigurationName) == Debug (
   echo Registering Debug version of Add-In for PowerDesigner in Windows Registry...
-  reg import $(ProjectDir)Register_Debug_AddIn.reg
+  reg import $(ProjectDir)Register_Debug_AddIn.reg /reg:64
 )</PostBuildEvent>
   </PropertyGroup>
 </Project>
