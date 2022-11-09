@@ -1,6 +1,13 @@
 name: main
 
 on:
+  workflow_dispatch:
+    inputs:
+      build_msi:
+        description: 'Build Installer'
+        required: false
+        default: true
+        type: boolean
   push:
     branches:
       - main
@@ -25,4 +32,4 @@ jobs:
     # Use the build-addin action.
     - uses: ./.github/actions/build-addin
       with:
-        build_msi: true
+        build_msi: ${{ inputs.build_msi }}
