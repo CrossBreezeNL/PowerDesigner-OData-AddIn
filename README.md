@@ -41,6 +41,7 @@ When you want to update an existing model which was not reverse engineered using
 1. Given the new file the `Name` 'OData Metadata' and the `Code` 'ODATA_METADATA'.
 1. Set the `Location type` to 'URL'.
 1. Set the `Location` to the URL to the $metadata location of the OData metadata feed.
+1. Set the 'Comment' value either to 'NoAuthencation' or 'BasicAuthentication', depending on the required authentication method.
 1. Untick the `Generate` option.
 1. Click `OK`.
 
