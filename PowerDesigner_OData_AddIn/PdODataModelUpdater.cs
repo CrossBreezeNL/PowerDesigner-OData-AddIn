@@ -16,8 +16,8 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
         /// </summary>
         public enum ODataAutenticationType
         {
-            NoAuthentication,
-            BasicAuthentication
+            None,
+            Basic
         }
 
         // A reference to the PowerDesigner logger object.
@@ -104,7 +104,7 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
             // Create a web request to download the OData metadata.
             WebRequest metadataRequest = WebRequest.Create(oDataMetadataUri);
             // Set the credentials to use.
-            if (oDataAuthentication.Equals(ODataAutenticationType.BasicAuthentication)) {
+            if (oDataAuthentication.Equals(ODataAutenticationType.Basic)) {
                 // TODO: Ask the user for the username and password for the OData feed.
                 // TODO: In the screen the user should be aware the credentials are not stored.
                 //metadataRequest.Credentials = new NetworkCredential("username", "password");
@@ -191,7 +191,7 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
             // If the Comment is empty, no authentication is set, so we default to NoAuthentication.
             if (oDataMetadataFile.Comment.Length == 0)
             {
-                oDataAuthType = ODataAutenticationType.NoAuthentication;
+                oDataAuthType = ODataAutenticationType.None;
             }
             // If there is a value in Comment, parse it into a ODataAutenticationType object.
             else if (!Enum.TryParse(oDataMetadataFile.Comment, out oDataAuthType))

@@ -181,21 +181,9 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
 
                         // Get a pointer to the PowerDesigner main window so we can show message boxes on top of it.
                         NativeWindow pdWindow = NativeWindow.FromHandle((IntPtr)this._app.MainWindowHandle);
-                        // Ask the user to enter the URI of the OData metadata feed.
-                        string strODataModelName = "";
-                        if (InputBoxHelper.InputBox(pdWindow, "Reverse Engineer OData - Model name", "Please enter the name for the new model:", ref strODataModelName) == DialogResult.OK)
-                        {
-                            //_logger.Debug(String.Format("strODataModelName='{0}'", strODataModelName));
-                            string strODataMetadataUri = "";
-                            if (InputBoxHelper.InputBox(pdWindow, "Reverse Engineer OData - OData URI", "Please enter the OData $metadata URI:", ref strODataMetadataUri) == DialogResult.OK)
-                            {
-                                // TODO: Ask the user which authentication method to use.
-                                PdODataModelUpdater.ODataAutenticationType oDataAuthType = PdODataModelUpdater.ODataAutenticationType.NoAuthentication;
-                                //_logger.Debug(String.Format("strODataMetadataUri='{0}'", strODataMetadataUri));
-                                PdPDM.Model pdmModel = new PdODataModelUpdater(this._logger, this._app).CreatePdmModelFromODataMetadata(strODataModelName, strODataMetadataUri, oDataAuthType, false);
-                            }
-                        }
-                        
+
+                        // Show the Pd OData Reverse form.
+                        new PdODataReversePropertiesForm(new PdODataModelUpdater(this._logger, this._app)).Show(pdWindow);
                     }
                 }
                 // All other commands are pObject specific, and thus not null.

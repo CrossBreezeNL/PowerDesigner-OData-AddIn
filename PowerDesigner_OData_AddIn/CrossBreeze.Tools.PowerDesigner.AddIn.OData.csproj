@@ -65,11 +65,16 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="InputBoxHelper.cs" />
     <Compile Include="PdLogger.cs" />
     <Compile Include="PdODataAddIn.cs" />
     <Compile Include="PdODataException.cs" />
     <Compile Include="PdODataModelUpdater.cs" />
+    <Compile Include="Forms\PdODataReversePropertiesForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\PdODataReversePropertiesForm.Designer.cs">
+      <DependentUpon>PdODataReversePropertiesForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="PdODataV3Helper.cs" />
     <Compile Include="PdODataV4Helper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -86,6 +91,11 @@
     <PackageReference Include="Microsoft.OData.Edm">
       <Version>7.12.3</Version>
     </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Forms\PdODataReversePropertiesForm.resx">
+      <DependentUpon>PdODataReversePropertiesForm.cs</DependentUpon>
+    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
