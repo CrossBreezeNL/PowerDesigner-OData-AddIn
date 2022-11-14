@@ -17,30 +17,37 @@ Make sure to restart PowerDesigner after the installation. Then open Tools -> Ge
 ## Usage
 In the following sections the usage of the Add In is explained.
 ### Reverse engineer OData
-In order to reverse engineer an OData feed follow the following steps:
+In order to reverse engineer an OData service follow the following steps:
 1. In the main menu of PowerDesigner click on `File` > `Reverse Engineer` > `OData...`.
    ![PowerDesigner Reverse Engineer OData](./screenshots/file-reverse-engineer-odata.png)
-1. A model dialog will popup to ask for the new model name, this will be the name of the new Physical Data Model containing the structure of the OData feed.
-1. Another model dialog will popup where you can fill in the $metadata URI for the OData feed.
-   ![OData $metadata URI](./screenshots/model-dialog-metadata-uri.png)
+1. A model dialog will popup to ask for the new model name, the metadata URI and the authentication type. The new model name will be the name of the new Physical Data Model containing the structure of the OData service.
+  ![Reverse engineer OData to PDM](./screenshots/model-dialog-reverse-odata.png)
+1. If you have selected an authentication type other then `None` another model dialog will popup where you can pass the username and password.
+  ![OData authentcation](./screenshots/model-dialog-authentication.png)
 
-After the previous steps are completed a new PDM model will be created in the active workspace and will be populated with tables (with columns) based on the metadata of the OData feed.
+After the previous steps are completed a new PDM model will be created in the active workspace and will be populated with tables (with columns) based on the metadata of the OData service.
 
 Next to the tables there will also be a file named 'OData Metadata', which is a reference to the OData Metadata URI used to generate the PDM.
+
+> **Note**
+> The authentication information is not stored in the model. The authentication information will be asked for every time you update the model.
 
 ### Updating existing reverse engineered OData model
 For any physical data model which contains a file with the code 'ODATA_METADATA' the menu option `Update model from OData metadata` will be available.
 
 ![Model menu update model](./screenshots/model-menu-update-option.png)
 
-By clicking this menu option a new model will be generated using the OData Metadata URI and a model merge window will popup which shows the difference between the existing OData physical data model and the metadata retrieved from the OData feed.
+By clicking this menu option a new model will be generated using the OData metadata URI and a model merge window will popup which shows the difference between the existing OData physical data model and the metadata retrieved from the OData service.
+
+If the authentication type is not `None`, a dialog will popup where the authentication information is requested during the update process.
 
 ### Manually adding OData Metadata file
 When you want to update an existing model which was not reverse engineered using the Reverse Engineer menu option, you can manually add the OData Metadata file. Follow the steps below to do so:
 1. Right-click on the model, choose `New` > `File`.
 1. Given the new file the `Name` 'OData Metadata' and the `Code` 'ODATA_METADATA'.
 1. Set the `Location type` to 'URL'.
-1. Set the `Location` to the URL to the $metadata location of the OData metadata feed.
+1. Set the `Location` to the URL to the $metadata location of the OData metadata service.
+1. Set the `Comment` value either to 'None' or 'Basic', depending on the required authentication method.
 1. Untick the `Generate` option.
 1. Click `OK`.
 

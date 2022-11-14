@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using PdAddInTypLib;
-using System.Windows.Forms;
 
 
 namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
@@ -70,7 +69,7 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
             // Wrap the whole ProvideMenuItems in a generic Try-Catch since exceptions are not handled by the Com Add-In automatically. The Add-In will stop working at that point.
             try
             {
-                _logger.Debug(String.Format("ProvideMenuItems [sMenu='{0}'; pObject={1}]", sMenu, _logger.PDObjectToString(pObject)));
+                //_logger.Debug(String.Format("ProvideMenuItems [sMenu='{0}'; pObject={1}]", sMenu, _logger.PDObjectToString(pObject)));
 
                 // If the pObject is not set the Import or Reverse menu items are requested.
                 if (pObject == null)
@@ -121,7 +120,7 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
             // Wrap the whole IsCommandSupported in a generic Try-Catch since exceptions are not handled by the Com Add-In automatically. The Add-In will stop working at that point.
             try
             {
-                _logger.Debug(String.Format("IsCommandSupported [sMenu='{0}'; pObject={1}; sCommandName='{2}']", sMenu, _logger.PDObjectToString(pObject), sCommandName));
+                //_logger.Debug(String.Format("IsCommandSupported [sMenu='{0}'; pObject={1}; sCommandName='{2}']", sMenu, _logger.PDObjectToString(pObject), sCommandName));
 
                 // If the object is null it is either for the Import or Reverse menu.
                 if (pObject == null)
@@ -179,21 +178,8 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
                     {
                         _logger.Debug("Reverse engineer OData command is invoked...");
 
-                        // Get a pointer to the PowerDesigner main window so we can show message boxes on top of it.
-                        NativeWindow pdWindow = NativeWindow.FromHandle((IntPtr)this._app.MainWindowHandle);
-                        // Ask the user to enter the URI of the OData metadata feed.
-                        string strODataModelName = "";
-                        if (InputBoxHelper.InputBox(pdWindow, "Reverse Engineer OData - Model name", "Please enter the name for the new model:", ref strODataModelName) == DialogResult.OK)
-                        {
-                            _logger.Debug(String.Format("strODataModelName='{0}'", strODataModelName));
-                            string strODataMetadataUri = "";
-                            if (InputBoxHelper.InputBox(pdWindow, "Reverse Engineer OData - OData URI", "Please enter the OData $metadata URI:", ref strODataMetadataUri) == DialogResult.OK)
-                            {
-                                _logger.Debug(String.Format("strODataMetadataUri='{0}'", strODataMetadataUri));
-                                PdPDM.Model pdmModel = new PdODataModelUpdater(this._logger, this._app).CreatePdmModelFromODataMetadata(strODataModelName, strODataMetadataUri, false);
-                            }
-                        }
-                        
+                        // Create a new PDM model.
+                        new PdODataModelUpdater(this._logger, this._app).CreatePdmModel();
                     }
                 }
                 // All other commands are pObject specific, and thus not null.
@@ -208,15 +194,8 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
                         // Update the model here...
                         PdPDM.Model pdmModel = (PdPDM.Model)pObject;
 
-                        PdCommon.FileObject oDataMetadataFile = PdODataModelUpdater.GetODataMetadataFile(pdmModel);
-                        if (oDataMetadataFile == null)
-                        {
-                            _logger.Debug(string.Format("The model {0} doesn't have a OData metadata file!", pdmModel.DisplayName));
-                            return;
-                        }
-
                         // Update the current model from the Uri from the file reference.
-                        new PdODataModelUpdater(this._logger, this._app).UpdatePdmModel(pdmModel, oDataMetadataFile.Location);
+                        new PdODataModelUpdater(this._logger, this._app).UpdatePdmModel(pdmModel);
                     }
                 }
 
