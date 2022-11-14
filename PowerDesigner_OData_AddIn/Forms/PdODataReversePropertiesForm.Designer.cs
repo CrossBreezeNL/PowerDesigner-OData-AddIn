@@ -1,5 +1,5 @@
 ﻿
-namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
+namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData.Forms
 {
     partial class PdODataReversePropertiesForm
     {

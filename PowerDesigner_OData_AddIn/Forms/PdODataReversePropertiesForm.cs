@@ -1,18 +1,49 @@
 ﻿using System;
 using System.Windows.Forms;
 
-namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
+namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData.Forms
 {
     public partial class PdODataReversePropertiesForm : Form
     {
-        PdODataModelUpdater _pdDataModelUpdater;
+        /// <summary>
+        /// Public property to retrieve the model name.
+        /// </summary>
+        public string ModelName
+        {
+            get
+            {
+                return this.textBoxModelName.Text;
+            }
+        }
 
-        public PdODataReversePropertiesForm(PdODataModelUpdater pdDataModelUpdater)
+        /// <summary>
+        /// Public property to retrieve the OData metadata uri.
+        /// </summary>
+        public string ODataMetadataUri
+        {
+            get
+            {
+                return this.textBoxODataMetadataURI.Text;
+            }
+        }
+
+        /// <summary>
+        /// Public property to retrieve the OData metadata uri.
+        /// </summary>
+        public PdODataModelUpdater.ODataAutenticationType AuthenticationType
+        {
+            get
+            {
+                return (PdODataModelUpdater.ODataAutenticationType)this.comboBoxAuthenticationType.SelectedValue;
+            }
+        }
+
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        public PdODataReversePropertiesForm()
         {
             InitializeComponent();
-
-            // Store reference to the PD Data Model Updater.
-            this._pdDataModelUpdater = pdDataModelUpdater;
 
             // Add the authentication types from the Enum to the combobox.
             this.comboBoxAuthenticationType.DataSource = Enum.GetValues(typeof(PdODataModelUpdater.ODataAutenticationType));
@@ -25,12 +56,12 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
             // Validate the contents of the text and combo boxes.
             if (this.textBoxModelName.Text == null || this.textBoxModelName.Text.Length == 0)
             {
-                MessageBox.Show(this, "Please enter the model name is empty.");
+                MessageBox.Show(this, "Please enter the model name.");
                 return;
             }
             else if(this.textBoxODataMetadataURI.Text == null || this.textBoxODataMetadataURI.Text.Length == 0)
             {
-                MessageBox.Show(this, "Please enter the OData Metadata URI.");
+                MessageBox.Show(this, "Please enter the OData service metadata URI.");
                 return;
             }
             else if (this.comboBoxAuthenticationType.SelectedValue == null)
@@ -39,16 +70,9 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
                 return;
             }
 
-            // Collect the information for creating the PDM model.
-            string newModelName = this.textBoxModelName.Text;
-            string oDataMetadataUri = this.textBoxODataMetadataURI.Text;
-            PdODataModelUpdater.ODataAutenticationType oDataAuthenticationType = (PdODataModelUpdater.ODataAutenticationType)this.comboBoxAuthenticationType.SelectedValue;
-
             // Close the form.
+            this.DialogResult = DialogResult.OK;
             this.Close();
-
-            // Create the PDM model.
-            _pdDataModelUpdater.CreatePdmModelFromODataMetadata(newModelName, oDataMetadataUri, oDataAuthenticationType, false);
         }
 
         /// <summary>
@@ -58,6 +82,7 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
         /// <param name="e"></param>
         private void cancelButton_Click(object sender, EventArgs e)
         {
+            this.DialogResult = DialogResult.Cancel;
             this.Close();
         }
     }

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using PdAddInTypLib;
-using System.Windows.Forms;
 
 
 namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
@@ -179,11 +178,8 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
                     {
                         _logger.Debug("Reverse engineer OData command is invoked...");
 
-                        // Get a pointer to the PowerDesigner main window so we can show message boxes on top of it.
-                        NativeWindow pdWindow = NativeWindow.FromHandle((IntPtr)this._app.MainWindowHandle);
-
-                        // Show the Pd OData Reverse form.
-                        new PdODataReversePropertiesForm(new PdODataModelUpdater(this._logger, this._app)).Show(pdWindow);
+                        // Create a new PDM model.
+                        new PdODataModelUpdater(this._logger, this._app).CreatePdmModel();
                     }
                 }
                 // All other commands are pObject specific, and thus not null.

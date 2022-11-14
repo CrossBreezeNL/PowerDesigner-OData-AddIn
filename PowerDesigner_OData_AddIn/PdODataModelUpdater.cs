@@ -2,6 +2,8 @@
 using System.Net;
 using System.Xml;
 using System.Xml.Linq;
+using System.Windows.Forms;
+using CrossBreeze.Tools.PowerDesigner.AddIn.OData.Forms;
 
 namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
 {
@@ -105,9 +107,21 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
             WebRequest metadataRequest = WebRequest.Create(oDataMetadataUri);
             // Set the credentials to use.
             if (oDataAuthentication.Equals(ODataAutenticationType.Basic)) {
-                // TODO: Ask the user for the username and password for the OData feed.
-                // TODO: In the screen the user should be aware the credentials are not stored.
-                //metadataRequest.Credentials = new NetworkCredential("username", "password");
+                using (PdODataBasicAuthenticationForm authForm = new PdODataBasicAuthenticationForm())
+                {
+                    // Open the authentication form with the PowerDesigner windows being the owner.
+                    // If the result of the dialog was OK, we can fetch the authentication information.
+                    if (authForm.ShowDialog(PdAppHelper.GetPDWindow(this._app)) == DialogResult.OK) {
+                        metadataRequest.Credentials = new NetworkCredential(authForm.Username, authForm.Password);
+                        _logger.Debug("Succesfully set authentication information for web-request.");
+                    }
+                    // If in the dialog the cancel button was pressed, we stop the reverse engineering process.
+                    else
+                    {
+                        _logger.Info("The authentication dialog was cancelled, so stopping reverse engineering.");
+                        return oImportDataModel;
+                    }
+                }
             }
             // The only other authentication method is NONE, for which we don't have to do anything.
 
@@ -170,6 +184,27 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
             }
 
             return oImportDataModel;
+        }
+
+        /// <summary>
+        /// Create a Pdm Model using a form where the user specifies the information needed.
+        /// </summary>
+        public void CreatePdmModel()
+        {
+            // Open a form where the user can entier the name, URI and authentication type for the OData service.
+            using (PdODataReversePropertiesForm reverseEngineerForm = new PdODataReversePropertiesForm())
+            {
+                if (reverseEngineerForm.ShowDialog(PdAppHelper.GetPDWindow(this._app)) == DialogResult.OK)
+                {
+                    // Create the PDM model.
+                    CreatePdmModelFromODataMetadata(reverseEngineerForm.ModelName, reverseEngineerForm.ODataMetadataUri, reverseEngineerForm.AuthenticationType, false);
+                }
+                else
+                {
+                    // If the result is not OK, stop the process.
+                    _logger.Debug("The reverse engineer form was cancelled, so stopping.");
+                }
+            }
         }
 
         /// <summary>
