@@ -48,14 +48,26 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
                                 // Loop overthe declared properties.
                                 foreach (IEdmProperty edmProperty in entityType.DeclaredProperties)
                                 {
-                                    // Create a new columns for the property.
-                                    PdPDM.Column pdmColumn = (PdPDM.Column)pdmTable.Columns.CreateNew();
-                                    pdmColumn.Name = edmProperty.Name;
-                                    pdmColumn.SetNameToCode();
-                                    // Add the new columns to the columns collection.
-                                    pdmTable.Columns.Add(pdmColumn);
-
                                     logger.Debug(string.Format(" -Property[Name={0}; PropertyKind={1}; Type={2}]", edmProperty.Name, Enum.GetName(typeof(EdmPropertyKind), edmProperty.PropertyKind), edmProperty.Type.FullName()));
+
+                                    // Only add columns for properties which are structural.
+                                    if (edmProperty.PropertyKind.Equals(EdmPropertyKind.Structural))
+                                    {
+                                        // Create a new columns for the property.
+                                        PdPDM.Column pdmColumn = (PdPDM.Column)pdmTable.Columns.CreateNew();
+                                        pdmColumn.Name = edmProperty.Name;
+                                        pdmColumn.SetNameToCode();
+
+                                        // If the type is set, update the column.
+                                        if (edmProperty.Type != null)
+                                        {
+                                            SetColumnType(pdmColumn, edmProperty.Type);
+                                        }
+
+                                        // Add the new columns to the columns collection.
+                                        pdmTable.Columns.Add(pdmColumn);
+                                    }
+
                                 }
                                 // Add the new table to the tables collection.
                                 pdmModel.Tables.Add(pdmTable);
@@ -71,6 +83,115 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
                 foreach (EdmError edmError in errors)
                 {
                     logger.Error(string.Format(" [{0}] {1} @{2}", edmError.ErrorCode, edmError.ErrorMessage, edmError.ErrorLocation));
+                }
+            }
+        }
+
+        /// <summary>
+        /// Function to get the Sql data type based on a Edm primitive kind.
+        /// Used: https://learn.microsoft.com/en-us/dotnet/framework/data/adonet/ef/sqlclient-for-ef-types
+        /// </summary>
+        /// <param name="edmPrimitiveType"></param>
+        /// <returns></returns>
+        public static void SetColumnType(PdPDM.Column pdmColumn, IEdmTypeReference edmType)
+        {
+            // Set the Mandatory property as the inverse of IsNullable.
+            pdmColumn.Mandatory = !edmType.IsNullable;
+
+            // Translate the DataType if the edm type is a primitive.
+            if (edmType.IsPrimitive())
+            {
+                switch (edmType.PrimitiveKind())
+                {
+                    case EdmPrimitiveTypeKind.Binary:
+                        IEdmBinaryTypeReference edmBinaryType = edmType.AsBinary();
+                        if (edmBinaryType.IsFixedLength.HasValue && edmBinaryType.IsFixedLength.Value == true)
+                        {
+                            pdmColumn.DataType = "binary";
+                            // Set the length, if known.
+                            if (edmBinaryType.MaxLength.HasValue)
+                                pdmColumn.Length = edmBinaryType.MaxLength.Value;
+                        } else
+                        {
+                            pdmColumn.DataType = "varbinary";
+                            // Set the length, if known.
+                            if (edmBinaryType.MaxLength.HasValue)
+                                pdmColumn.Length = edmBinaryType.MaxLength.Value;
+                        }
+                        break;
+
+                    case EdmPrimitiveTypeKind.Boolean:
+                        pdmColumn.DataType = "bit";
+                        break;
+
+                    case EdmPrimitiveTypeKind.Byte:
+                        pdmColumn.DataType = "tinyint";
+                        break;
+
+                    case EdmPrimitiveTypeKind.DateTimeOffset:
+                        pdmColumn.DataType = "datetimeoffset";
+                        break;
+
+                    case EdmPrimitiveTypeKind.DateTime:
+                        pdmColumn.DataType = "datetime2";
+                        break;
+
+                    case EdmPrimitiveTypeKind.Decimal:
+                        pdmColumn.DataType = "decimal";
+                        // If the precision is set, copy it.
+                        if (edmType.AsDecimal().Precision.HasValue)
+                            pdmColumn.Precision = (short)edmType.AsDecimal().Precision.Value;
+                        // If the scale is set, copy it.
+                        if (edmType.AsDecimal().Scale.HasValue)
+                            pdmColumn.Length = edmType.AsDecimal().Scale.Value;
+                        break;
+
+                    case EdmPrimitiveTypeKind.Double:
+                        pdmColumn.DataType = "float";
+                        break;
+
+                    case EdmPrimitiveTypeKind.Guid:
+                        pdmColumn.DataType = "uniqueidentifier";
+                        break;
+
+                    case EdmPrimitiveTypeKind.Int16:
+                        pdmColumn.DataType = "smallint";
+                        break;
+
+                    case EdmPrimitiveTypeKind.Int32:
+                        pdmColumn.DataType = "int";
+                        break;
+
+                    case EdmPrimitiveTypeKind.Int64:
+                        pdmColumn.DataType = "bigint";
+                        break;
+
+                    case EdmPrimitiveTypeKind.SByte:
+                        pdmColumn.DataType = "tinyint";
+                        break;
+
+                    case EdmPrimitiveTypeKind.String:
+                        IEdmStringTypeReference stringType = edmType.AsString();
+                        // Check whether the string is a fixed or variable length string and set the type and length accordingly.
+                        if (stringType.IsFixedLength.HasValue && stringType.IsFixedLength.Value == true)
+                        {
+                            pdmColumn.DataType = "nchar";
+                            // Set the length, if known.
+                            if (stringType.MaxLength.HasValue)
+                                pdmColumn.Length = stringType.MaxLength.Value;
+                        }
+                        else
+                        {
+                            pdmColumn.DataType = "nvarchar";
+                            // Set the length, if known.
+                            if (stringType.MaxLength.HasValue)
+                                pdmColumn.Length = stringType.MaxLength.Value;
+                        }
+                        break;
+
+                    case EdmPrimitiveTypeKind.Time:
+                        pdmColumn.DataType = "time";
+                        break;
                 }
             }
         }
