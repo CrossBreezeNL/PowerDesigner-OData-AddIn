@@ -55,17 +55,99 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
                                     pdmColumn.Name = edmProperty.Name;
                                     pdmColumn.SetNameToCode();
 
+                                    // If the EDM property is part of the key, set the Primary indicator to true.
+                                    if (edmProperty.IsKey())
+                                        pdmColumn.Primary = true;
+
                                     // If the type is set, update the column.
                                     if (edmProperty.Type != null)
                                     {
-                                        SetColumnType(pdmColumn, edmProperty.Type);
+                                        SetColumnType(pdmColumn, edmProperty.Type, logger);
                                     }
 
                                     // Add the new columns to the columns collection.
                                     pdmTable.Columns.Add(pdmColumn);
                                 }
+                                // TODO: Handle references at the end of creating the model. You cannot create references while handling entities, since the target entity might not exist yet.
+                                /**else if (edmProperty.PropertyKind.Equals(EdmPropertyKind.Navigation))
+                                {
+                                    logger.Debug(string.Format("Found navigation property {0}", edmProperty.Name));
+
+                                    // If the type is not set, skip this property.
+                                    string foreignEntityName = ((IEdmNavigationProperty)edmProperty).ToEntityType().Name;
+                                    if (edmProperty.Type == null)
+                                        break;
+                                    logger.Debug(string.Format("Found foreign entity {0}", foreignEntityName));
+
+                                    PdPDM.Reference fkReference = (PdPDM.Reference)pdmTable.OutReferences.CreateNew();
+                                    fkReference.Name = edmProperty.Name;
+                                    fkReference.SetNameToCode();
+
+                                    // Search for the foreign table.
+                                    PdPDM.Table foreignPdmTable = null;
+                                    foreach (PdPDM.Table possibleForeignTable in pdmModel.Tables)
+                                    {
+                                        if (possibleForeignTable.Name.Equals(foreignEntityName))
+                                        {
+                                            foreignPdmTable = possibleForeignTable;
+                                            break;
+                                        }
+                                    }
+                                    if (foreignPdmTable == null)
+                                    {
+                                        logger.Error("The foreign table was not found!");
+                                        throw new PdODataException("The foreign table was not found!");
+                                    }
+
+                                    foreach (EdmReferentialConstraintPropertyPair referentialConstraintPropertyPair in ((IEdmNavigationProperty)edmProperty).ReferentialConstraint.PropertyPairs)
+                                    {
+                                        IEdmStructuralProperty localProperty = referentialConstraintPropertyPair.DependentProperty;
+                                        IEdmStructuralProperty foreignProperty = referentialConstraintPropertyPair.PrincipalProperty;
+                                        logger.Debug(string.Format("Found referential constraint property pair for local property {0} to foreign property {1}", localProperty.Name, foreignProperty.Name));
+
+                                        PdPDM.Column localColumn = null;
+                                        // Find the local PDM column.
+                                        foreach (PdPDM.Column pdmColumn in pdmTable.Columns)
+                                        {
+                                            if (pdmColumn.Name.Equals(localProperty.Name))
+                                            {
+                                                localColumn = pdmColumn;
+                                                break;
+                                            }
+                                        }
+                                        if (localColumn == null)
+                                        {
+                                            logger.Error("The local column was not found!");
+                                            throw new PdODataException("The local column was not found!");
+                                        }
+
+                                        PdPDM.Column foreignColumn = null;
+                                        // Find the foreign PDM column.
+                                        foreach (PdPDM.Column pdmColumn in foreignPdmTable.Columns)
+                                        {
+                                            if (pdmColumn.Name.Equals(foreignProperty.Name))
+                                            {
+                                                foreignColumn = pdmColumn;
+                                                break;
+                                            }
+                                        }
+                                        if (foreignColumn == null)
+                                        {
+                                            logger.Error("The foreign column was not found!");
+                                            throw new PdODataException("The foreign column was not found!");
+                                        }
+
+                                        PdPDM.ReferenceJoin referenceJoin = (PdPDM.ReferenceJoin)fkReference.Joins.CreateNew();
+                                        referenceJoin.ChildTableColumn = localColumn;
+                                        referenceJoin.ParentTableColumn = foreignColumn;
+                                        fkReference.Joins.Add(referenceJoin);
+                                    }
+
+                                    pdmTable.OutReferences.Add(fkReference);
+                                }*/
 
                             }
+
                             // Add the new table to the tables collection.
                             pdmModel.Tables.Add(pdmTable);
                         }
@@ -89,7 +171,7 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
         /// </summary>
         /// <param name="edmPrimitiveType"></param>
         /// <returns></returns>
-        public static void SetColumnType(PdPDM.Column pdmColumn, IEdmTypeReference edmType)
+        public static void SetColumnType(PdPDM.Column pdmColumn, IEdmTypeReference edmType, PdLogger logger)
         {
             // Set the Mandatory property as the inverse of IsNullable.
             pdmColumn.Mandatory = !edmType.IsNullable;
@@ -97,6 +179,7 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
             // Translate the DataType if the edm type is a primitive.
             if (edmType.IsPrimitive())
             {
+                logger.Debug("The datatype is a primitive type, so translating to PDM datatype.");
                 switch (edmType.PrimitiveKind())
                 {
                     case EdmPrimitiveTypeKind.Binary:
