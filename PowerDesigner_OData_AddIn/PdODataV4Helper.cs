@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Xml;
 
 using Microsoft.OData.Edm;
@@ -28,7 +26,7 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
                 // Create a list of type definitions.
                 IEnumerable<IEdmSchemaType> schemaTypeDefinitions = model.SchemaElements.Where(schemaElement => schemaElement.SchemaElementKind.Equals(EdmSchemaElementKind.TypeDefinition)).Cast<IEdmSchemaType>();
 
-                // First create the Domains based on the enum types.
+                // Create the Domains based on the enum types.
                 logger.Debug("Adding domains from enums:");
                 foreach (IEdmEnumType enumType in schemaTypeDefinitions.Where(typeDefinition => typeDefinition.TypeKind.Equals(EdmTypeKind.Enum)))
                 {
@@ -38,6 +36,8 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
                     PdPDM.PhysicalDomain pdmEnumDomain = (PdPDM.PhysicalDomain)pdmModel.Domains.CreateNew();
                     pdmEnumDomain.Name = enumType.FullName();
                     pdmEnumDomain.SetNameToCode();
+                    // An Enum type has integer values with labels, so we set the datatype to int.
+                    pdmEnumDomain.DataType = "int";
 
                     // Create the ListOfValues of the Domain based on the Enum members.
                     // The list of values is stored in a formatted text.
@@ -53,7 +53,7 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
                     pdmModel.Domains.Add(pdmEnumDomain);
                 }
 
-                // Then create all tables based on the Entity and Complex type definitions.
+                // Create all tables based on the Entity and Complex type definitions.
                 logger.Debug("Adding tables from entity and complex types:");
                 IEnumerable<IEdmSchemaType> structuredTypeElements = schemaTypeDefinitions.Where(typeDefinition => typeDefinition.TypeKind.Equals(EdmTypeKind.Entity) || typeDefinition.TypeKind.Equals(EdmTypeKind.Complex));
                 foreach (IEdmSchemaType structuredTypeElement in structuredTypeElements)
@@ -75,6 +75,7 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
                     pdmTypePackage.Tables.Add(pdmTypeTable);
                 }
 
+                // Create references between the tables.
                 logger.Debug("Adding tables references:");
                 foreach (IEdmSchemaType structuredTypeElement in structuredTypeElements)
                 {
@@ -127,8 +128,7 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
                 }
 
 
-                //logger.Debug(string.Format("EntityContainer[Name={0}; Location={1}]", model.EntityContainer.Name, model.EntityContainer.Location()));
-                // Loop through the entity elements in the model.
+                // Create views for all entity sets.
                 logger.Debug("Adding views from entity sets:");
                 IEnumerable<IEdmEntitySet> edmEntitySets = model.EntityContainer.Elements.Where(entityContainerElement => entityContainerElement.ContainerElementKind.Equals(EdmContainerElementKind.EntitySet)).Cast<IEdmEntitySet>();
                 foreach (IEdmEntitySet edmEntitySet in edmEntitySets)
@@ -165,7 +165,7 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
                     pdmEntitySetPackage.Views.Add(pdmView);
                 }
 
-                // After we created the views we can create the view references between them.
+                // Create the view references between the views (and entities).
                 logger.Debug("Adding view references:");
                 foreach (IEdmEntitySet edmEntitySet in edmEntitySets)
                 {
@@ -419,6 +419,8 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
         /// <returns></returns>
         public static void SetColumnType(PdPDM.Column pdmColumn, IEdmTypeReference edmType, PdLogger logger)
         {
+            logger.Debug(string.Format(" -SetColumnType[ColumnName={0};EdmType={1}]", pdmColumn.Name, edmType.FullName()));
+
             // Set the Mandatory property as the inverse of IsNullable.
             pdmColumn.Mandatory = !edmType.IsNullable;
 
@@ -500,11 +502,21 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
                 }
             }
             // If the type is an Enum, set the corresponding domain.
-            //else if (edmType.IsEnum())
-            //{
-            //    logger.Debug("The datatype is an Enum type, so translating to PDM domain.");
-            //    logger.Debug(string.Format(" -Enum={0}", edmType.FullName()));
-            //}
+            else if (edmType.IsEnum())
+            {
+                logger.Debug("The datatype is an Enum type, so translating to PDM domain.");
+                string enumFullName = edmType.FullName();
+                logger.Debug(string.Format(" -Enum={0}", enumFullName));
+                PdPDM.PhysicalDomain enumDomain = (PdPDM.PhysicalDomain)((PdPDM.Model)pdmColumn.Model).FindChildByName(enumFullName, (int)PdPDM.PdPDM_Classes.cls_PhysicalDomain);
+                if (enumDomain == null)
+                {
+                    logger.Error(string.Format("The domain for Enum '{0}' was not found!", enumFullName));
+                    throw new PdODataException("The domain for Enum was not found!");
+                }
+
+                // Assign the domain to the column.
+                pdmColumn.Domain = enumDomain;
+            }
         }
     }
 }
