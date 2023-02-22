@@ -597,7 +597,7 @@
             "SharedLegacy" = "11:FALSE"
             "PackageAs" = "3:1"
             "Register" = "3:1"
-            "Exclude" = "11:FALSE"
+            "Exclude" = "11:TRUE"
             "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
@@ -968,7 +968,7 @@
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:PowerDesigner OData Add-In"
         "ProductCode" = "8:{E2DE22AF-4625-4FAF-BB67-699174628967}"
-        "PackageCode" = "8:{DA9E538C-9517-4D73-A022-5E8F99B5CE0A}"
+        "PackageCode" = "8:{803B70B7-AAE7-4350-8A1C-3EEEE8C9A84A}"
         "UpgradeCode" = "8:{69527C48-8042-4FF6-B5BE-DDEAB055932C}"
         "AspNetVersion" = "8:"
         "RestartWWWService" = "11:FALSE"

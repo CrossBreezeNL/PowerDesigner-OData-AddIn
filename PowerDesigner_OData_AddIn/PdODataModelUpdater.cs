@@ -4,6 +4,7 @@ using System.Xml;
 using System.Xml.Linq;
 using System.Windows.Forms;
 using CrossBreeze.Tools.PowerDesigner.AddIn.OData.Forms;
+using PdCommon;
 
 namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
 {
@@ -85,6 +86,14 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
 
             // Create a new PDM model.
             PdPDM.Model oImportDataModel = (PdPDM.Model)this._app.CreateModel(((int)PdPDM.PdPDM_Classes.cls_Model), "", openFlags);
+            // Set base model options to be case senstive and mixed case.
+            PdPDM.ModelOptions modelOptions = (PdPDM.ModelOptions)oImportDataModel.GetModelOptions();
+            modelOptions.NameCodeCaseSensitive = true;
+            // Set all Code naming conventions character case to Mixed (M).
+            foreach (PdCommon.NamingConvention namingConvention in modelOptions.CodeNamingConventions)
+            {
+                namingConvention.CharacterCase = "M";
+            }
             // Set the name of the model.
             oImportDataModel.Name = pdmModelName;
             oImportDataModel.SetNameToCode();

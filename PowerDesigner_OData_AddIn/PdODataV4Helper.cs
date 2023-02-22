@@ -61,7 +61,7 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
                     logger.Debug(string.Format(" {0}[Name={1}; Namespace={2}]", Enum.GetName(typeof(EdmTypeKind), structuredTypeElement.TypeKind), structuredTypeElement.Name, structuredTypeElement.Namespace));
 
                     // Get or create the package for the entity type.
-                    PdPDM.Package pdmTypePackage = GetOrCreatePackage(pdmModel, structuredTypeElement.Namespace);
+                    PdPDM.Package pdmTypePackage = PdHelper.GetOrCreatePackage(pdmModel, structuredTypeElement.Namespace);
 
                     // Create a new PDM table object for the EntityType.
                     PdPDM.Table pdmTypeTable = (PdPDM.Table)pdmTypePackage.Tables.CreateNew();
@@ -80,13 +80,13 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
                 foreach (IEdmSchemaType structuredTypeElement in structuredTypeElements)
                 {
                     // Find the table which represents the underlying type.
-                    PdPDM.Package pdmEntityTypePackage = GetOrCreatePackage(pdmModel, structuredTypeElement.Namespace);
+                    PdPDM.Package pdmEntityTypePackage = PdHelper.GetOrCreatePackage(pdmModel, structuredTypeElement.Namespace);
                     if (pdmEntityTypePackage == null)
                     {
                         logger.Error(string.Format("The type package '{0}' was not found!", structuredTypeElement.Namespace));
                         throw new PdODataException("The type package was not found!");
                     }
-                    PdPDM.Table typeTable = GetTable(pdmEntityTypePackage, structuredTypeElement.Name);
+                    PdPDM.Table typeTable = PdHelper.GetTable(pdmEntityTypePackage, structuredTypeElement.Name);
                     if (typeTable == null)
                     {
                         logger.Error(string.Format("The type table '{0}' was not found!", structuredTypeElement.Name));
@@ -100,13 +100,13 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
 
                         IEdmEntityType targetedEntityType = navProp.ToEntityType();
                         // Find the table which represents the targeted type.
-                        PdPDM.Package pdmTargetEntityTypePackage = GetOrCreatePackage(pdmModel, targetedEntityType.Namespace);
+                        PdPDM.Package pdmTargetEntityTypePackage = PdHelper.GetOrCreatePackage(pdmModel, targetedEntityType.Namespace);
                         if (pdmTargetEntityTypePackage == null)
                         {
                             logger.Error(string.Format("The targeted type package '{0}' was not found!", targetedEntityType.Namespace));
                             throw new PdODataException("The targeted type package was not found!");
                         }
-                        PdPDM.Table targetedTypeTable = GetTable(pdmTargetEntityTypePackage, targetedEntityType.Name);
+                        PdPDM.Table targetedTypeTable = PdHelper.GetTable(pdmTargetEntityTypePackage, targetedEntityType.Name);
                         if (targetedTypeTable == null)
                         {
                             logger.Error(string.Format("The targeted type table '{0}' was not found!", targetedEntityType.Name));
@@ -144,19 +144,19 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
 
                     // Now a table is created for the EntityType, we create a view for the EntitySet.
                     // Find the schema to entity type belongs to, so the table can be added in the right package.
-                    PdPDM.Package pdmEntitySetPackage = GetOrCreatePackage(pdmModel, edmEntitySet.Container.Namespace);
+                    PdPDM.Package pdmEntitySetPackage = PdHelper.GetOrCreatePackage(pdmModel, edmEntitySet.Container.Namespace);
                     PdPDM.View pdmView = (PdPDM.View)pdmEntitySetPackage.Views.CreateNew();
                     pdmView.Name = edmEntitySet.Name;
                     pdmView.SetNameToCode();
 
                     // Find the table which represents the underlying type.
-                    PdPDM.Package pdmEntityTypePackage = GetOrCreatePackage(pdmModel, entityType.Namespace);
+                    PdPDM.Package pdmEntityTypePackage = PdHelper.GetOrCreatePackage(pdmModel, entityType.Namespace);
                     if (pdmEntityTypePackage == null)
                     {
                         logger.Error(string.Format("The type package '{0}' was not found!", entityType.Namespace));
                         throw new PdODataException("The type package was not found!");
                     }
-                    PdPDM.Table typeTable = GetTable(pdmEntityTypePackage, entityType.Name);
+                    PdPDM.Table typeTable = PdHelper.GetTable(pdmEntityTypePackage, entityType.Name);
                     if (typeTable == null)
                     {
                         logger.Error(string.Format("The type table '{0}' was not found!", entityType.Name));
@@ -176,7 +176,7 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
                     logger.Debug(string.Format(" EntitySet[ContainerElementKind={0}; Name={1}; Namespace={2}]", Enum.GetName(typeof(EdmContainerElementKind), edmEntitySet.ContainerElementKind), edmEntitySet.Name, edmEntitySet.Container.Namespace));
 
                     // Get the package for the view.
-                    PdPDM.Package pdmEntitySetPackage = GetPackage(pdmModel, edmEntitySet.Container.Namespace);
+                    PdPDM.Package pdmEntitySetPackage = PdHelper.GetPackage(pdmModel, edmEntitySet.Container.Namespace);
                     if (pdmEntitySetPackage == null)
                     {
                         logger.Error(string.Format("The current package '{0}' was not found!", edmEntitySet.Container.Namespace));
@@ -186,7 +186,7 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
                         logger.Debug(string.Format(" -Package={0}", pdmEntitySetPackage.Name));
                     }
 
-                    PdPDM.View currentView = GetView(pdmEntitySetPackage, edmEntitySet.Name);
+                    PdPDM.View currentView = PdHelper.GetView(pdmEntitySetPackage, edmEntitySet.Name);
                     if (currentView == null)
                     {
                         logger.Error(string.Format("The current view '{0}' was not found!", edmEntitySet.Name));
@@ -204,7 +204,7 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
                         // Represents a type implementing Microsoft.OData.Edm.IEdmCollectionType.
                         if (navigationPropertyBinding.Target.Type.TypeKind.Equals(EdmTypeKind.Collection))
                         {
-                            PdPDM.View targetView = GetView(pdmEntitySetPackage, navigationPropertyBinding.Target.Name);
+                            PdPDM.View targetView = PdHelper.GetView(pdmEntitySetPackage, navigationPropertyBinding.Target.Name);
                             if (targetView == null)
                             {
                                 logger.Error(string.Format("The target view '{0}' was not found!", navigationPropertyBinding.Target.Name));
@@ -281,80 +281,25 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
             }
         }
 
-        public static PdPDM.Package GetOrCreatePackage(PdPDM.BasePackage pdmModel, string packageNameToFind)
-        {
-            var pdmPackageObject = pdmModel.FindChildByName(packageNameToFind, (int)PdPDM.PdPDM_Classes.cls_Package);
-            // If the package is found, return it.
-            if (pdmPackageObject != null)
-            {
-                return (PdPDM.Package)pdmPackageObject;
-            }
-            // If the package wasn't found, create it.
-            else
-            {
-                PdPDM.Package pdmPackage = (PdPDM.Package)pdmModel.Packages.CreateNew();
-                pdmPackage.Name = packageNameToFind;
-                pdmPackage.SetNameToCode();
-                pdmModel.Packages.Add(pdmPackage);
-                return pdmPackage;
-            }
-
-        }
-
-        public static PdPDM.Package GetPackage(PdPDM.BasePackage pdmModel, string packageNameToFind)
-        {
-            var pdmPackageObject = pdmModel.FindChildByName(packageNameToFind, (int)PdPDM.PdPDM_Classes.cls_Package);
-            // If the package is found, return it.
-            if (pdmPackageObject != null)
-            {
-                return (PdPDM.Package)pdmPackageObject;
-            }
-            // If the package wasn't found, return null.
-            return null;
-
-        }
-
-        public static PdPDM.Table GetTable(PdPDM.BasePackage model, string tableNameToFind)
-        {
-            // Find the table in the model.
-            var tableObject = model.FindChildByName(tableNameToFind, (int)PdPDM.PdPDM_Classes.cls_Table);
-            if (tableObject != null)
-                return (PdPDM.Table)tableObject;
-
-            // If the table wasn't found, return null.
-            return null;
-        }
-
-        public static PdPDM.View GetView(PdPDM.BasePackage model, string viewNameToFind)
-        {
-            // Find the view in the model.
-            var viewObject = model.FindChildByName(viewNameToFind, (int)PdPDM.PdPDM_Classes.cls_View);
-            if (viewObject != null)
-                return (PdPDM.View)viewObject;
-
-            // If the view wasn't found, return null.
-            return null;
-        }
-
         /// <summary>
         /// Function to get the Sql data type based on a Edm primitive kind.
         /// Used: https://learn.microsoft.com/en-us/dotnet/framework/data/adonet/ef/sqlclient-for-ef-types
         /// </summary>
-        /// <param name="edmPrimitiveType"></param>
+        /// <param name="pdmColumn"></param>
+        /// <param name="edmType"></param>
+        /// <param name="logger"></param>
         /// <returns></returns>
         public static void SetColumnType(PdPDM.Column pdmColumn, IEdmTypeReference edmType, PdLogger logger)
         {
-            logger.Debug(string.Format(" -SetColumnType[ColumnName={0};EdmType={1}]", pdmColumn.Name, edmType.FullName()));
-
             // Set the Mandatory property as the inverse of IsNullable.
             pdmColumn.Mandatory = !edmType.IsNullable;
 
             // Translate the DataType if the edm type is a primitive.
             if (edmType.IsPrimitive())
             {
-                logger.Debug("The datatype is a primitive type, so translating to PDM datatype.");
                 switch (edmType.PrimitiveKind())
                 {
+                    // In OData V4 there is no "IsFixedLength" property on the binary type, so we can't differentiate a varbinary from binary.
                     case EdmPrimitiveTypeKind.Binary:
                         pdmColumn.DataType = "varbinary";
                         IEdmBinaryTypeReference edmBinaryType = edmType.AsBinary();
@@ -432,6 +377,7 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
                 logger.Debug("The datatype is an Enum type, so translating to PDM domain.");
                 string enumFullName = edmType.FullName();
                 logger.Debug(string.Format(" -Enum={0}", enumFullName));
+                // Find the domain for the enum type.
                 PdPDM.PhysicalDomain enumDomain = (PdPDM.PhysicalDomain)((PdPDM.Model)pdmColumn.Model).FindChildByName(enumFullName, (int)PdPDM.PdPDM_Classes.cls_PhysicalDomain);
                 if (enumDomain == null)
                 {
