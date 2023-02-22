@@ -122,8 +122,12 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
                         // Set the parent table and role.
                         tableRef.ParentTable = targetedTypeTable;
                         tableRef.ParentRole = navProp.Name;
+
                         // Add the reference to the child table.
                         typeTable.OutReferences.Add(tableRef);
+
+                        // Empty the joins list (by default it is populated.
+                        tableRef.Joins.Clear();
                     }
                 }
 
@@ -208,7 +212,7 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
                             }
                             else
                             {
-                                logger.Debug(" -Creating table reference:");
+                                logger.Debug(" -Creating view reference:");
                                 logger.Debug(string.Format("  -TargetView={0}", targetView.Name));
                                 PdPDM.ViewReference viewReference = (PdPDM.ViewReference)pdmEntitySetPackage.ViewReferences.CreateNew();
                                 viewReference.Name = string.Format("{0} > {1} : {2}", currentView.Name, targetView.Name, navigationPropertyBinding.NavigationProperty.Name);
@@ -216,95 +220,16 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
                                 // Set the parent to the view.
                                 viewReference.Object2 = targetView;
                                 viewReference.ParentRole = navigationPropertyBinding.NavigationProperty.Name;
+
                                 // Add the reference to the view.
                                 currentView.OutViewReferences.Add(viewReference);
+
+                                // Empty the joins list (by default it is populated.
+                                viewReference.Joins.Clear();
                             }
                         }
                     }
                 }
-
-                //foreach (Tuple<IEdmEntityContainerElement, IEdmNavigationPropertyBinding> edmNavigationPropertyBindingTuple in model.EntityContainer.GetNavigationPropertyBindings())
-                //{
-                //    IEdmNavigationPropertyBinding edmNavigationPropertyBinding = edmNavigationPropertyBindingTuple.Item2;
-                //    IEdmNavigationProperty edmNavigationProperty = edmNavigationPropertyBinding.NavigationProperty;
-                //    string targetViewName = edmNavigationPropertyBinding.Target.Name;
-                //    logger.Debug(string.Format("Found navigation property binding '{0}'; Target={1}; Type={2}", edmNavigationProperty.Name, targetViewName, Enum.GetName(typeof(EdmTypeKind), edmNavigationPropertyBinding.Target.Type.TypeKind)));
-
-                //    // Represents a type implementing Microsoft.OData.Edm.IEdmCollectionType.
-                //    if (edmNavigationPropertyBinding.Target.Type.TypeKind.Equals(EdmTypeKind.Collection))
-                //    {
-                //        IEdmCollectionType collectionType = (IEdmCollectionType)edmNavigationPropertyBinding.Target.Type;
-                //        logger.Debug(string.Format(" =IEdmCollection[ElementType={0}", Enum.GetName(typeof(EdmTypeKind), collectionType.ElementType.TypeKind())));
-                //    }
-
-                    //PdPDM.View targetView = GetView(pdmModel, targetViewName);
-                    //if (targetView == null)
-                    //{
-                    //    logger.Error(string.Format("The target view '{0}' was not found!", targetViewName));
-                    //    throw new PdODataException("The target view was not found!");
-                    //}
-
-                    //// If the type is not set, skip this property.
-                    //string foreignEntityName = edmNavigationProperty.ToEntityType().Name;
-                    //logger.Debug(string.Format("Found foreign entity {0}", foreignEntityName));
-
-                    //PdPDM.View foreignView = GetView(pdmModel, foreignEntityName);
-                    //if (foreignView == null)
-                    //{
-                    //    logger.Error(string.Format("The foreign view '{0}' was not found!", foreignEntityName));
-                    //    throw new PdODataException("The foreign view was not found!");
-                    //}
-
-                    //PdPDM.ViewReference fkReference = (PdPDM.ViewReference)targetView.OutViewReferences.CreateNew();
-                    //fkReference.Name = edmNavigationProperty.Name;
-                    //fkReference.SetNameToCode();
-
-                    //foreach (EdmReferentialConstraintPropertyPair referentialConstraintPropertyPair in ((IEdmNavigationProperty)edmProperty).ReferentialConstraint.PropertyPairs)
-                    //{
-                    //    IEdmStructuralProperty localProperty = referentialConstraintPropertyPair.DependentProperty;
-                    //    IEdmStructuralProperty foreignProperty = referentialConstraintPropertyPair.PrincipalProperty;
-                    //    logger.Debug(string.Format("Found referential constraint property pair for local property {0} to foreign property {1}", localProperty.Name, foreignProperty.Name));
-
-                    //    PdPDM.Column localColumn = null;
-                    //    // Find the local PDM column.
-                    //    foreach (PdPDM.Column pdmColumn in pdmTable.Columns)
-                    //    {
-                    //        if (pdmColumn.Name.Equals(localProperty.Name))
-                    //        {
-                    //            localColumn = pdmColumn;
-                    //            break;
-                    //        }
-                    //    }
-                    //    if (localColumn == null)
-                    //    {
-                    //        logger.Error("The local column was not found!");
-                    //        throw new PdODataException("The local column was not found!");
-                    //    }
-
-                    //    PdPDM.Column foreignColumn = null;
-                    //    // Find the foreign PDM column.
-                    //    foreach (PdPDM.Column pdmColumn in foreignPdmTable.Columns)
-                    //    {
-                    //        if (pdmColumn.Name.Equals(foreignProperty.Name))
-                    //        {
-                    //            foreignColumn = pdmColumn;
-                    //            break;
-                    //        }
-                    //    }
-                    //    if (foreignColumn == null)
-                    //    {
-                    //        logger.Error("The foreign column was not found!");
-                    //        throw new PdODataException("The foreign column was not found!");
-                    //    }
-
-                    //    PdPDM.ReferenceJoin referenceJoin = (PdPDM.ReferenceJoin)fkReference.Joins.CreateNew();
-                    //    referenceJoin.ChildTableColumn = localColumn;
-                    //    referenceJoin.ParentTableColumn = foreignColumn;
-                    //    fkReference.Joins.Add(referenceJoin);
-                    //}
-
-                    //targetView.OutViewReferences.Add(fkReference);
-                //}
 
             }
             // If an error occurred while trying to parse the edm model, log the error(s).
