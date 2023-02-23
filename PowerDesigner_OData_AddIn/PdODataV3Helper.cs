@@ -65,7 +65,8 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
 
                     // Create a new PDM table object for the EntityType.
                     PdPDM.Table pdmTypeTable = (PdPDM.Table)pdmTypePackage.Tables.CreateNew();
-                    pdmTypeTable.Name = structuredTypeElement.Name;
+                    pdmTypeTable.Name = string.Format("{0}.{1}", structuredTypeElement.Namespace, structuredTypeElement.Name);
+                    pdmTypeTable.Comment = structuredTypeElement.Name;
                     pdmTypeTable.SetNameToCode();
 
                     // Add the columns to the table based on the declared properties.
@@ -87,10 +88,11 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
                         logger.Error(string.Format("The type package '{0}' was not found!", entityElement.Namespace));
                         throw new PdODataException("The type package was not found!");
                     }
-                    PdPDM.Table typeTable = PdHelper.GetTable(pdmEntityTypePackage, entityElement.Name);
+                    string tableName = string.Format("{0}.{1}", entityElement.Namespace, entityElement.Name);
+                    PdPDM.Table typeTable = PdHelper.GetTable(pdmEntityTypePackage, tableName);
                     if (typeTable == null)
                     {
-                        logger.Error(string.Format("The type table '{0}' was not found!", entityElement.Name));
+                        logger.Error(string.Format("The type table '{0}' was not found!", tableName));
                         throw new PdODataException("The type table was not found!");
                     }
 
@@ -108,10 +110,11 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
                             logger.Error(string.Format("The targeted type package '{0}' was not found!", targetedEntityType.Namespace));
                             throw new PdODataException("The targeted type package was not found!");
                         }
-                        PdPDM.Table targetedTypeTable = PdHelper.GetTable(pdmTargetEntityTypePackage, targetedEntityType.Name);
+                        string targetedTableName = string.Format("{0}.{1}", targetedEntityType.Namespace, targetedEntityType.Name);
+                        PdPDM.Table targetedTypeTable = PdHelper.GetTable(pdmTargetEntityTypePackage, targetedTableName);
                         if (targetedTypeTable == null)
                         {
-                            logger.Error(string.Format("The targeted type table '{0}' was not found!", targetedEntityType.Name));
+                            logger.Error(string.Format("The targeted type table '{0}' was not found!", targetedTableName));
                             throw new PdODataException("The targeted type table was not found!");
                         }
 
@@ -149,7 +152,7 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
                         // Find the schema to entity type belongs to, so the table can be added in the right package.
                         PdPDM.Package pdmEntitySetPackage = PdHelper.GetOrCreatePackage(pdmModel, edmEntitySet.Container.Namespace);
                         PdPDM.View pdmView = (PdPDM.View)pdmEntitySetPackage.Views.CreateNew();
-                        pdmView.Name = string.Format("{0}.{1}", edmEntitySet.Container.Namespace, edmEntitySet.Name);
+                        pdmView.Name = edmEntitySet.Name;
                         pdmView.SetNameToCode();
 
                         // Find the table which represents the underlying type.
@@ -159,10 +162,11 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
                             logger.Error(string.Format("The type package '{0}' was not found!", entityType.Namespace));
                             throw new PdODataException("The type package was not found!");
                         }
-                        PdPDM.Table typeTable = PdHelper.GetTable(pdmEntityTypePackage, entityType.Name);
+                        string typeTableName = string.Format("{0}.{1}", entityType.Namespace, entityType.Name);
+                        PdPDM.Table typeTable = PdHelper.GetTable(pdmEntityTypePackage, typeTableName);
                         if (typeTable == null)
                         {
-                            logger.Error(string.Format("The type table '{0}' was not found!", entityType.Name));
+                            logger.Error(string.Format("The type table '{0}' was not found!", typeTableName));
                             throw new PdODataException("The type table was not found!");
                         }
                         // Get a list of the column names.
