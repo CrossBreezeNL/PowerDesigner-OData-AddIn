@@ -192,6 +192,9 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
                 }
             }
 
+            // Update the all diagrams in the model.
+            PdHelper.UpdateDiagramResursively(oImportDataModel);
+
             return oImportDataModel;
         }
 

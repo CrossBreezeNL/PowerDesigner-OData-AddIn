@@ -14,13 +14,37 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
             // If the package wasn't found, create it.
             else
             {
+                // Create a new package and set the Name and Code.
                 PdPDM.Package pdmPackage = (PdPDM.Package)pdmModel.Packages.CreateNew();
                 pdmPackage.Name = packageNameToFind;
                 pdmPackage.SetNameToCode();
+
+                // Add the new package to the model.
                 pdmModel.Packages.Add(pdmPackage);
+
+                // Return the new package.
                 return pdmPackage;
             }
 
+        }
+
+        public static void UpdateDiagramResursively(PdPDM.BasePackage packageOrModel)
+        {
+            // First update all diagrams in child-packages.
+            foreach (PdPDM.BasePackage childPackage in packageOrModel.Packages)
+            {
+                UpdateDiagramResursively(childPackage);
+            }
+
+            // Set the name of the default diagram to the package name.
+            PdPDM.PhysicalDiagram defautlDiagram = (PdPDM.PhysicalDiagram)packageOrModel.DefaultDiagram;
+            defautlDiagram.Name = packageOrModel.Name;
+            defautlDiagram.SetNameToCode();
+
+            // Creates a symbol for each object in package which can be displayed in current diagram.
+            defautlDiagram.AttachAllObjects();
+            // Perform auto-layout on the diagram.
+            defautlDiagram.AutoLayout();
         }
 
         public static PdPDM.Package GetPackage(PdPDM.BasePackage pdmModel, string packageNameToFind)
