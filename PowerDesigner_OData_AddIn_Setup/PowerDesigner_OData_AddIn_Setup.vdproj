@@ -312,7 +312,7 @@
             "Enabled" = "11:TRUE"
             "PromptEnabled" = "11:TRUE"
             "PrerequisitesLocation" = "2:1"
-            "Url" = "8:"
+            "Url" = "8:https://github.com/CrossBreezeNL/PowerDesigner-OData-AddIn"
             "ComponentsUrl" = "8:"
                 "Items"
                 {
@@ -597,7 +597,7 @@
             "SharedLegacy" = "11:FALSE"
             "PackageAs" = "3:1"
             "Register" = "3:1"
-            "Exclude" = "11:TRUE"
+            "Exclude" = "11:FALSE"
             "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
@@ -973,7 +973,7 @@
         "AspNetVersion" = "8:"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:FALSE"
-        "DetectNewerInstalledVersion" = "11:TRUE"
+        "DetectNewerInstalledVersion" = "11:FALSE"
         "InstallAllUsers" = "11:TRUE"
         "ProductVersion" = "8:1.0.0"
         "Manufacturer" = "8:CrossBreeze"
@@ -1571,7 +1571,7 @@
         {
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_4B2D84A67F1E41BF9E6BD783A8AC40F9"
             {
-            "SourcePath" = "8:..\\PowerDesigner_OData_AddIn\\obj\\Release\\CrossBreeze.Tools.PowerDesigner.AddIn.OData.dll"
+            "SourcePath" = "8:..\\PowerDesigner_OData_AddIn\\obj\\Debug\\CrossBreeze.Tools.PowerDesigner.AddIn.OData.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_4FC4A2B1FA3648379E1C54E7E80501F8"

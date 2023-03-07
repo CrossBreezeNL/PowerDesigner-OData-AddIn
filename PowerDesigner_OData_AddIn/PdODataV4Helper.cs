@@ -25,7 +25,6 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
 
                 // Create a list of type definitions.
                 IEnumerable<IEdmSchemaType> schemaTypeDefinitions = model.SchemaElements.Where(schemaElement => schemaElement.SchemaElementKind.Equals(EdmSchemaElementKind.TypeDefinition)).Cast<IEdmSchemaType>();
-
                 // Create the Domains based on the enum types.
                 logger.Debug("Adding domains from enums:");
                 foreach (IEdmEnumType enumType in schemaTypeDefinitions.Where(typeDefinition => typeDefinition.TypeKind.Equals(EdmTypeKind.Enum)))
@@ -58,16 +57,25 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
                 IEnumerable<IEdmSchemaType> structuredTypeElements = schemaTypeDefinitions.Where(typeDefinition => typeDefinition.TypeKind.Equals(EdmTypeKind.Entity) || typeDefinition.TypeKind.Equals(EdmTypeKind.Complex));
                 foreach (IEdmSchemaType structuredTypeElement in structuredTypeElements)
                 {
-                    logger.Debug(string.Format(" {0}[Name={1}; Namespace={2}]", Enum.GetName(typeof(EdmTypeKind), structuredTypeElement.TypeKind), structuredTypeElement.Name, structuredTypeElement.Namespace));
+                    string edmTypeKindName = Enum.GetName(typeof(EdmTypeKind), structuredTypeElement.TypeKind);
+                    logger.Debug(string.Format(" {0}[Name={1}; Namespace={2}]", edmTypeKindName, structuredTypeElement.Name, structuredTypeElement.Namespace));
 
                     // Get or create the package for the entity type.
                     PdPDM.Package pdmTypePackage = PdHelper.GetOrCreatePackage(pdmModel, structuredTypeElement.Namespace);
+                    // Get or create the user for the entity type.
+                    PdPDM.User pdmUser = PdHelper.GetOrCreateUser(pdmModel, structuredTypeElement.Namespace);
 
                     // Create a new PDM table object for the EntityType.
                     PdPDM.Table pdmTypeTable = (PdPDM.Table)pdmTypePackage.Tables.CreateNew();
                     pdmTypeTable.Name = string.Format("{0}.{1}", structuredTypeElement.Namespace, structuredTypeElement.Name);
                     pdmTypeTable.Comment = structuredTypeElement.Name;
                     pdmTypeTable.SetNameToCode();
+                    // Set the stereotype to the OData EDM Type Kind.
+                    pdmTypeTable.Stereotype = edmTypeKindName;
+                    // Set the owner of the table.
+                    pdmTypeTable.Owner = pdmUser;
+                    // Disable generation of the type table.
+                    pdmTypeTable.Generated = false;
 
                     // Add the columns to the table based on the declared properties.
                     AddColumsToTable(pdmTypeTable, (IEdmStructuredType)structuredTypeElement, logger);
@@ -125,18 +133,24 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
                         // Set the parent table and role.
                         tableRef.ParentTable = targetedTypeTable;
                         tableRef.ParentRole = navProp.Name;
+                        // Set the foreign key constraint name.
+                        tableRef.ForeignKeyConstraintName = string.Format("FK_{0}_{1}_{2}", typeTable.Code, targetedTypeTable.Code, tableRef.ParentRole);
 
                         // Add the reference to the child table.
                         typeTable.OutReferences.Add(tableRef);
 
                         // Empty the joins list (by default it is populated.
                         tableRef.Joins.Clear();
+
+                        // Disable generation of the reference.
+                        tableRef.Generated = false;
+
                     }
                 }
 
 
-                // Create views for all entity sets.
-                logger.Debug("Adding views from entity sets:");
+                // Create replica-tables for all entity sets.
+                logger.Debug("Adding replica-tables from entity sets:");
                 IEnumerable<IEdmEntitySet> edmEntitySets = model.EntityContainer.Elements.Where(entityContainerElement => entityContainerElement.ContainerElementKind.Equals(EdmContainerElementKind.EntitySet)).Cast<IEdmEntitySet>();
                 foreach (IEdmEntitySet edmEntitySet in edmEntitySets)
                 {
@@ -145,12 +159,11 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
                     IEdmEntityType entityType = edmEntitySet.EntityType();
                     logger.Debug(string.Format(" =EntityType[Name={0}; IsAbstract={1}; Namespace={2}]", entityType.Name, entityType.IsAbstract, entityType.Namespace));
 
-                    // Now a table is created for the EntityType, we create a view for the EntitySet.
+                    // Now a table is created for the EntityType, we create a replica-table for the EntitySet.
                     // Find the schema to entity type belongs to, so the table can be added in the right package.
                     PdPDM.Package pdmEntitySetPackage = PdHelper.GetOrCreatePackage(pdmModel, edmEntitySet.Container.Namespace);
-                    PdPDM.View pdmView = (PdPDM.View)pdmEntitySetPackage.Views.CreateNew();
-                    pdmView.Name = edmEntitySet.Name;
-                    pdmView.SetNameToCode();
+                    // Get or create the user for the entity type.
+                    PdPDM.User pdmUser = PdHelper.GetOrCreateUser(pdmModel, edmEntitySet.Container.Namespace);
 
                     // Find the table which represents the underlying type.
                     PdPDM.Package pdmEntityTypePackage = PdHelper.GetOrCreatePackage(pdmModel, entityType.Namespace);
@@ -166,20 +179,53 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
                         logger.Error(string.Format("The type table '{0}' was not found!", typeTableName));
                         throw new PdODataException("The type table was not found!");
                     }
-                    // Get a list of the column names.
-                    var colNames = from PdPDM.Column col in typeTable.Columns.Cast<PdPDM.Column>()
-                                    select string.Format("\"{0}\"", col.Name);
-                    pdmView.SQLQuery = string.Format("SELECT {0} FROM \"{1}\"", string.Join(",", colNames), typeTable.Name);
-                    pdmEntitySetPackage.Views.Add(pdmView);
+
+                    // Make the new table a replica of the type table.
+                    // For docs on replica, read: https://help.sap.com/docs/SAP_POWERDESIGNER/abd3434b4987485c92057ab9392aadbe/c7e0de496e1b1014aa2ee40d2fca2b30.html?locale=en-US&version=16.6.6
+                    logger.Debug("  - Creating replicated table for entity set");
+                    PdPDM.Table pdmTable = (PdPDM.Table)typeTable.CreateReplica(pdmEntitySetPackage);
+
+                    // Get the replica object.
+                    logger.Debug("  - Setting replication settings");
+                    PdCommon.BaseReplication baseReplication = (PdCommon.BaseReplication)pdmTable.SourceReplication;
+                    // BaseReplication.SetAttributeReplicated(ByVal Attribute As String, ByVal Replicated As Boolean = True, ByVal Replicate As Boolean = True) As Boolean
+                    // Disable replication of Name, Code, Stereptype, Owner and Generate (since this are different for the replicated table).
+                    baseReplication.SetAttributeReplicated("Name", false, false);
+                    baseReplication.SetAttributeReplicated("Code", false, false);
+                    baseReplication.SetAttributeReplicated("Stereotype", false, false);
+                    baseReplication.SetAttributeReplicated("Owner", false, false);
+                    baseReplication.SetAttributeReplicated("Generated", false, false);
+                    // Don't replicate InReferences, OutReferences and all ExtendedDependency collections from the parent table.
+                    baseReplication.SetCollectionReplicated("InReferences", false, false);
+                    baseReplication.SetCollectionReplicated("OutReferences", false, false);
+                    baseReplication.SetCollectionReplicated("IncomingTraceabilityLinks", false, false);
+                    baseReplication.SetCollectionReplicated("ExtendedInfluences", false, false);
+                    baseReplication.SetCollectionReplicated("OutgoingTraceabilityLinks", false, false);
+                    baseReplication.SetCollectionReplicated("ExtendedDependencies", false, false);
+
+                    // Create a traceability link between the entity set table and it's underlying type.
+                    logger.Debug("  - Creating traceability link from entity set to entity.");
+                    PdCommon.ExtendedDependency extendedDependency = (PdCommon.ExtendedDependency)pdmModel.ChildTraceabilityLinks.CreateNew();
+                    extendedDependency.SourceObject = (PdCommon.NamedObject)pdmTable;
+                    extendedDependency.Stereotype = "EntitySet of Entity";
+                    extendedDependency.LinkedObject = (PdCommon.NamedObject)typeTable;
+
+                    // Set the Name, Code, Stereotype, Owner and Generated properties of the repica.
+                    logger.Debug("  - Setting Name, Code, Stereotype, Owner and Generated on replica-table");
+                    pdmTable.Name = edmEntitySet.Name;
+                    pdmTable.SetNameToCode();
+                    pdmTable.Stereotype = "EntitySet";
+                    pdmTable.Owner = pdmUser;
+                    pdmTable.Generated = true;
                 }
 
-                // Create the view references between the views (and entities).
-                logger.Debug("Adding view references:");
+                // Create the table references between the replica-tables.
+                logger.Debug("Adding replica-table references:");
                 foreach (IEdmEntitySet edmEntitySet in edmEntitySets)
                 {
                     logger.Debug(string.Format(" EntitySet[ContainerElementKind={0}; Name={1}; Namespace={2}]", Enum.GetName(typeof(EdmContainerElementKind), edmEntitySet.ContainerElementKind), edmEntitySet.Name, edmEntitySet.Container.Namespace));
 
-                    // Get the package for the view.
+                    // Get the package for the table.
                     PdPDM.Package pdmEntitySetPackage = PdHelper.GetPackage(pdmModel, edmEntitySet.Container.Namespace);
                     if (pdmEntitySetPackage == null)
                     {
@@ -190,14 +236,14 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
                         logger.Debug(string.Format(" -Package={0}", pdmEntitySetPackage.Name));
                     }
 
-                    PdPDM.View currentView = PdHelper.GetView(pdmEntitySetPackage, edmEntitySet.Name);
-                    if (currentView == null)
+                    PdPDM.Table currentTable = PdHelper.GetTable(pdmEntitySetPackage, edmEntitySet.Name);
+                    if (currentTable == null)
                     {
-                        logger.Error(string.Format("The current view '{0}' was not found!", edmEntitySet.Name));
-                        throw new PdODataException("The current view was not found!");
+                        logger.Error(string.Format("The current table '{0}' was not found!", edmEntitySet.Name));
+                        throw new PdODataException("The current table was not found!");
                     } else
                     {
-                        logger.Debug(string.Format(" -View={0}", currentView.Name));
+                        logger.Debug(string.Format(" -Table={0}", currentTable.Name));
                     }
 
                     // Loop throught the navigation property bindings.
@@ -208,28 +254,30 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
                         // Represents a type implementing Microsoft.OData.Edm.IEdmCollectionType.
                         if (navigationPropertyBinding.Target.Type.TypeKind.Equals(EdmTypeKind.Collection))
                         {
-                            PdPDM.View targetView = PdHelper.GetView(pdmEntitySetPackage, navigationPropertyBinding.Target.Name);
-                            if (targetView == null)
+                            PdPDM.Table targetTable = PdHelper.GetTable(pdmEntitySetPackage, navigationPropertyBinding.Target.Name);
+                            if (targetTable == null)
                             {
-                                logger.Error(string.Format("The target view '{0}' was not found!", navigationPropertyBinding.Target.Name));
-                                throw new PdODataException("The target view was not found!");
+                                logger.Error(string.Format("The target table '{0}' was not found!", navigationPropertyBinding.Target.Name));
+                                throw new PdODataException("The target table was not found!");
                             }
                             else
                             {
-                                logger.Debug(" -Creating view reference:");
-                                logger.Debug(string.Format("  -TargetView={0}", targetView.Name));
-                                PdPDM.ViewReference viewReference = (PdPDM.ViewReference)pdmEntitySetPackage.ViewReferences.CreateNew();
-                                viewReference.Name = string.Format("{0} > {1} : {2}", currentView.Name, targetView.Name, navigationPropertyBinding.NavigationProperty.Name);
-                                viewReference.SetNameToCode();
-                                // Set the parent to the view.
-                                viewReference.Object2 = targetView;
-                                viewReference.ParentRole = navigationPropertyBinding.NavigationProperty.Name;
+                                logger.Debug(" -Creating replica-table reference:");
+                                logger.Debug(string.Format("  -TargetTable={0}", targetTable.Name));
+                                PdPDM.Reference tableReference = (PdPDM.Reference)pdmEntitySetPackage.References.CreateNew();
+                                tableReference.Name = string.Format("{0} > {1} : {2}", currentTable.Name, targetTable.Name, navigationPropertyBinding.NavigationProperty.Name);
+                                tableReference.SetNameToCode();
+                                // Set the parent to the target table.
+                                tableReference.Object2 = targetTable;
+                                tableReference.ParentRole = navigationPropertyBinding.NavigationProperty.Name;
+                                // Set the foreign key constraint name.
+                                tableReference.ForeignKeyConstraintName = string.Format("FK_{0}_{1}_{2}", currentTable.Code, targetTable.Code, tableReference.ParentRole);
 
-                                // Add the reference to the view.
-                                currentView.OutViewReferences.Add(viewReference);
+                                // Add the reference to the current table.
+                                currentTable.OutReferences.Add(tableReference);
 
                                 // Empty the joins list (by default it is populated.
-                                viewReference.Joins.Clear();
+                                tableReference.Joins.Clear();
                             }
                         }
                     }
