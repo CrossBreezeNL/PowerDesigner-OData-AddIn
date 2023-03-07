@@ -28,6 +28,31 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
 
         }
 
+        public static PdPDM.User GetOrCreateUser(PdPDM.Model pdmModel, string userNameToFind)
+        {
+            var pdmUserObject = pdmModel.FindChildByName(userNameToFind, (int)PdPDM.PdPDM_Classes.cls_User);
+            // If the user is found, return it.
+            if (pdmUserObject != null)
+            {
+                return (PdPDM.User)pdmUserObject;
+            }
+            // If the user wasn't found, create it.
+            else
+            {
+                // Create a new user and set the Name and Code.
+                PdPDM.User pdmUser = (PdPDM.User)pdmModel.Users.CreateNew();
+                pdmUser.Name = userNameToFind;
+                pdmUser.SetNameToCode();
+
+                // Add the new package to the model.
+                pdmModel.Users.Add(pdmUser);
+
+                // Return the new package.
+                return pdmUser;
+            }
+
+        }
+
         public static void UpdateDiagramResursively(PdPDM.BasePackage packageOrModel)
         {
             // First update all diagrams in child-packages.
