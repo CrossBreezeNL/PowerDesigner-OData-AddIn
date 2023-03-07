@@ -22,7 +22,6 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
             // Try to parse the uri to a edm model.
             if (CsdlReader.TryParse(oDataMetadataXmlReader, out IEdmModel model, out IEnumerable<EdmError> errors))
             {
-
                 // Create a list of type definitions.
                 IEnumerable<IEdmSchemaType> schemaTypeDefinitions = model.SchemaElements.Where(schemaElement => schemaElement.SchemaElementKind.Equals(EdmSchemaElementKind.TypeDefinition)).Cast<IEdmSchemaType>();
                 // Create the Domains based on the enum types.
@@ -160,13 +159,11 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
                     logger.Debug(string.Format(" =EntityType[Name={0}; IsAbstract={1}; Namespace={2}]", entityType.Name, entityType.IsAbstract, entityType.Namespace));
 
                     // Now a table is created for the EntityType, we create a replica-table for the EntitySet.
-                    // Find the schema to entity type belongs to, so the table can be added in the right package.
-                    PdPDM.Package pdmEntitySetPackage = PdHelper.GetOrCreatePackage(pdmModel, edmEntitySet.Container.Namespace);
                     // Get or create the user for the entity type.
                     PdPDM.User pdmUser = PdHelper.GetOrCreateUser(pdmModel, edmEntitySet.Container.Namespace);
 
                     // Find the table which represents the underlying type.
-                    PdPDM.Package pdmEntityTypePackage = PdHelper.GetOrCreatePackage(pdmModel, entityType.Namespace);
+                    PdPDM.Package pdmEntityTypePackage = PdHelper.GetPackage(pdmModel, entityType.Namespace);
                     if (pdmEntityTypePackage == null)
                     {
                         logger.Error(string.Format("The type package '{0}' was not found!", entityType.Namespace));
@@ -183,7 +180,7 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
                     // Make the new table a replica of the type table.
                     // For docs on replica, read: https://help.sap.com/docs/SAP_POWERDESIGNER/abd3434b4987485c92057ab9392aadbe/c7e0de496e1b1014aa2ee40d2fca2b30.html?locale=en-US&version=16.6.6
                     logger.Debug("  - Creating replicated table for entity set");
-                    PdPDM.Table pdmTable = (PdPDM.Table)typeTable.CreateReplica(pdmEntitySetPackage);
+                    PdPDM.Table pdmTable = (PdPDM.Table)typeTable.CreateReplica(pdmModel);
 
                     // Get the replica object.
                     logger.Debug("  - Setting replication settings");
@@ -225,18 +222,7 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
                 {
                     logger.Debug(string.Format(" EntitySet[ContainerElementKind={0}; Name={1}; Namespace={2}]", Enum.GetName(typeof(EdmContainerElementKind), edmEntitySet.ContainerElementKind), edmEntitySet.Name, edmEntitySet.Container.Namespace));
 
-                    // Get the package for the table.
-                    PdPDM.Package pdmEntitySetPackage = PdHelper.GetPackage(pdmModel, edmEntitySet.Container.Namespace);
-                    if (pdmEntitySetPackage == null)
-                    {
-                        logger.Error(string.Format("The current package '{0}' was not found!", edmEntitySet.Container.Namespace));
-                        throw new PdODataException("The current package was not found!");
-                    } else
-                    {
-                        logger.Debug(string.Format(" -Package={0}", pdmEntitySetPackage.Name));
-                    }
-
-                    PdPDM.Table currentTable = PdHelper.GetTable(pdmEntitySetPackage, edmEntitySet.Name);
+                    PdPDM.Table currentTable = PdHelper.GetTable(pdmModel, edmEntitySet.Name);
                     if (currentTable == null)
                     {
                         logger.Error(string.Format("The current table '{0}' was not found!", edmEntitySet.Name));
@@ -254,7 +240,7 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
                         // Represents a type implementing Microsoft.OData.Edm.IEdmCollectionType.
                         if (navigationPropertyBinding.Target.Type.TypeKind.Equals(EdmTypeKind.Collection))
                         {
-                            PdPDM.Table targetTable = PdHelper.GetTable(pdmEntitySetPackage, navigationPropertyBinding.Target.Name);
+                            PdPDM.Table targetTable = PdHelper.GetTable(pdmModel, navigationPropertyBinding.Target.Name);
                             if (targetTable == null)
                             {
                                 logger.Error(string.Format("The target table '{0}' was not found!", navigationPropertyBinding.Target.Name));
@@ -264,7 +250,7 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
                             {
                                 logger.Debug(" -Creating replica-table reference:");
                                 logger.Debug(string.Format("  -TargetTable={0}", targetTable.Name));
-                                PdPDM.Reference tableReference = (PdPDM.Reference)pdmEntitySetPackage.References.CreateNew();
+                                PdPDM.Reference tableReference = (PdPDM.Reference)pdmModel.References.CreateNew();
                                 tableReference.Name = string.Format("{0} > {1} : {2}", currentTable.Name, targetTable.Name, navigationPropertyBinding.NavigationProperty.Name);
                                 tableReference.SetNameToCode();
                                 // Set the parent to the target table.
