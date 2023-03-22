@@ -339,11 +339,16 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
                 {
                     // In OData V4 there is no "IsFixedLength" property on the binary type, so we can't differentiate a varbinary from binary.
                     case EdmPrimitiveTypeKind.Binary:
-                        pdmColumn.DataType = "varbinary";
                         IEdmBinaryTypeReference edmBinaryType = edmType.AsBinary();
                         // Set the length, if known.
                         if (edmBinaryType.MaxLength.HasValue)
+                        {
+                            pdmColumn.DataType = "varbinary(%n)";
                             pdmColumn.Length = edmBinaryType.MaxLength.Value;
+                        } else
+                        {
+                            pdmColumn.DataType = "varbinary";
+                        }
                         break;
 
                     case EdmPrimitiveTypeKind.Boolean:
@@ -363,7 +368,14 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
                         break;
 
                     case EdmPrimitiveTypeKind.Decimal:
-                        pdmColumn.DataType = "decimal";
+                        // Set the datatype.
+                        if (edmType.AsDecimal().Precision.HasValue && edmType.AsDecimal().Scale.HasValue)
+                            pdmColumn.DataType = "decimal(%s, %p)";
+                        else if (edmType.AsDecimal().Scale.HasValue)
+                            pdmColumn.DataType = "decimal(%n)";
+                        else
+                            pdmColumn.DataType = "decimal";
+
                         // If the precision is set, copy it.
                         if (edmType.AsDecimal().Precision.HasValue)
                             pdmColumn.Precision = (short)edmType.AsDecimal().Precision.Value;
@@ -397,11 +409,17 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
                         break;
 
                     case EdmPrimitiveTypeKind.String:
-                        pdmColumn.DataType = "nvarchar";
                         IEdmStringTypeReference stringType = edmType.AsString();
                         // Set the length, if known.
                         if (stringType.MaxLength.HasValue)
+                        {
+                            pdmColumn.DataType = "nvarchar(%n)";
                             pdmColumn.Length = stringType.MaxLength.Value;
+                        }
+                        else
+                        {
+                            pdmColumn.DataType = "nvarchar";
+                        }
                         break;
 
                     case EdmPrimitiveTypeKind.TimeOfDay:
