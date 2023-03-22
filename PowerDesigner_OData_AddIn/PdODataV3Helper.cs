@@ -313,7 +313,8 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
                     // So we can check whether the property is part of they key.
                     if (edmStructuredType.TypeKind.Equals(EdmTypeKind.Entity))
                     {
-                        if (((IEdmEntityType)edmStructuredType).DeclaredKey.Contains(edmProperty))
+                        // Check whether the current property is part of the key (if declared).
+                        if (((IEdmEntityType)edmStructuredType).DeclaredKey != null && ((IEdmEntityType)edmStructuredType).DeclaredKey.Contains(edmProperty))
                         {
                             pdmColumn.Primary = true;
                         }
@@ -353,16 +354,28 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
                         IEdmBinaryTypeReference edmBinaryType = edmType.AsBinary();
                         if (edmBinaryType.IsFixedLength.HasValue && edmBinaryType.IsFixedLength.Value == true)
                         {
-                            pdmColumn.DataType = "binary";
                             // Set the length, if known.
                             if (edmBinaryType.MaxLength.HasValue)
+                            {
+                                pdmColumn.DataType = "binary(%n)";
                                 pdmColumn.Length = edmBinaryType.MaxLength.Value;
+                            }
+                            else
+                            {
+                                pdmColumn.DataType = "binary";
+                            }
                         } else
                         {
-                            pdmColumn.DataType = "varbinary";
                             // Set the length, if known.
                             if (edmBinaryType.MaxLength.HasValue)
+                            {
+                                pdmColumn.DataType = "varbinary(%n)";
                                 pdmColumn.Length = edmBinaryType.MaxLength.Value;
+                            }
+                            else
+                            {
+                                pdmColumn.DataType = "varbinary";
+                            }
                         }
                         break;
 
@@ -383,7 +396,14 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
                         break;
 
                     case EdmPrimitiveTypeKind.Decimal:
-                        pdmColumn.DataType = "decimal";
+                        // Set the datatype.
+                        if (edmType.AsDecimal().Precision.HasValue && edmType.AsDecimal().Scale.HasValue)
+                            pdmColumn.DataType = "decimal(%s, %p)";
+                        else if (edmType.AsDecimal().Scale.HasValue)
+                            pdmColumn.DataType = "decimal(%n)";
+                        else
+                            pdmColumn.DataType = "decimal";
+
                         // If the precision is set, copy it.
                         if (edmType.AsDecimal().Precision.HasValue)
                             pdmColumn.Precision = (short)edmType.AsDecimal().Precision.Value;
@@ -421,17 +441,28 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
                         // Check whether the string is a fixed or variable length string and set the type and length accordingly.
                         if (stringType.IsFixedLength.HasValue && stringType.IsFixedLength.Value == true)
                         {
-                            pdmColumn.DataType = "nchar";
-                            // Set the length, if known.
+                            // Set the datatype (and length, if known).
                             if (stringType.MaxLength.HasValue)
+                            {
+                                pdmColumn.DataType = "nchar(%n)";
                                 pdmColumn.Length = stringType.MaxLength.Value;
+                            } else
+                            {
+                                pdmColumn.DataType = "nchar";
+                            }
                         }
                         else
                         {
-                            pdmColumn.DataType = "nvarchar";
-                            // Set the length, if known.
+                            // Set the datatype (and length, if known).
                             if (stringType.MaxLength.HasValue)
+                            {
+                                pdmColumn.DataType = "nvarchar(%n)";
                                 pdmColumn.Length = stringType.MaxLength.Value;
+                            }
+                            else
+                            {
+                                pdmColumn.DataType = "nvarchar";
+                            }
                         }
                         break;
 
