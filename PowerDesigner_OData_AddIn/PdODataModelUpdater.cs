@@ -72,31 +72,9 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
         /// <param name="oDataAuthentication">The authentication method to use.</param>
         /// <param name="hiddenModel">Whether the model should be created as hidden.</param>
         /// <returns></returns>
-        public PdPDM.Model CreatePdmModelFromODataMetadata(string pdmModelName, string oDataMetadataUri, ODataAutenticationType oDataAuthentication, bool hiddenModel = true)
+        public void UpdatePdmModelFromODataMetadata(PdPDM.Model oImportDataModel, string oDataMetadataUri, ODataAutenticationType oDataAuthentication)
         {
-            _logger.Info(string.Format("CreatePdmModelFromODataMetadata[pdmModelName={0}; oDataMetadataUri={1}; hiddenModel={2}]", pdmModelName, oDataMetadataUri, hiddenModel));
-
-            // Set protocol to Tls 1.2 to solve SSL/TLS error.
-            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
-
-            // Derive on how to open the model, it's hidden by default.
-            PdCommon.OpenModelFlags openFlags = PdCommon.OpenModelFlags.omf_Default;
-            if (hiddenModel)
-                openFlags = PdCommon.OpenModelFlags.omf_Hidden;
-
-            // Create a new PDM model.
-            PdPDM.Model oImportDataModel = (PdPDM.Model)this._app.CreateModel(((int)PdPDM.PdPDM_Classes.cls_Model), "", openFlags);
-            // Set base model options to be case senstive and mixed case.
-            PdPDM.ModelOptions modelOptions = (PdPDM.ModelOptions)oImportDataModel.GetModelOptions();
-            modelOptions.NameCodeCaseSensitive = true;
-            // Set all Code naming conventions character case to Mixed (M).
-            foreach (PdCommon.NamingConvention namingConvention in modelOptions.CodeNamingConventions)
-            {
-                namingConvention.CharacterCase = "M";
-            }
-            // Set the name of the model.
-            oImportDataModel.Name = pdmModelName;
-            oImportDataModel.SetNameToCode();
+            _logger.Info(string.Format("UpdatePdmModelFromODataMetadata[pdmModel.Name={0}; oDataMetadataUri={1}; oDataAuthentication={2}]", oImportDataModel.Name, oDataMetadataUri, oDataAuthentication));
 
             // Store the metadata uri in a file object in the model.
             PdCommon.FileObject metaDataFile = (PdCommon.FileObject)oImportDataModel.Files.CreateNew();
@@ -111,6 +89,9 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
             metaDataFile.Comment = Enum.GetName(typeof(ODataAutenticationType), oDataAuthentication);
             // Add the file to the model.
             oImportDataModel.Files.Add((PdPDM.BaseObject)metaDataFile);
+
+            // Set protocol to Tls 1.2 to solve SSL/TLS error.
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
 
             // Create a web request to download the OData metadata.
             WebRequest metadataRequest = WebRequest.Create(oDataMetadataUri);
@@ -128,7 +109,6 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
                     else
                     {
                         _logger.Info("The authentication dialog was cancelled, so stopping reverse engineering.");
-                        return oImportDataModel;
                     }
                 }
             }
@@ -193,9 +173,7 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
             }
 
             // Update the all diagrams in the model.
-            PdHelper.UpdateDiagramResursively(oImportDataModel);
-
-            return oImportDataModel;
+            PdHelper.UpdateDiagramRecursively(oImportDataModel);
         }
 
         /// <summary>
@@ -208,8 +186,24 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
             {
                 if (reverseEngineerForm.ShowDialog(PdAppHelper.GetPDWindow(this._app)) == DialogResult.OK)
                 {
+                    // Create a new PDM model.
+                    PdPDM.Model oImportDataModel = (PdPDM.Model)this._app.CreateModel(((int)PdPDM.PdPDM_Classes.cls_Model));
+                    // Set base model options to be case senstive and mixed case.
+                    PdPDM.ModelOptions modelOptions = (PdPDM.ModelOptions)oImportDataModel.GetModelOptions();
+                    modelOptions.NameCodeCaseSensitive = true;
+                    // Set all Code naming conventions character case to Mixed (M).
+                    foreach (PdCommon.NamingConvention namingConvention in modelOptions.CodeNamingConventions)
+                    {
+                        namingConvention.CharacterCase = "M";
+                    }
+                    // Save the model options (otherwise it's not persisted).
+                    modelOptions.Save();
+                    // Set the name of the model.
+                    oImportDataModel.Name = reverseEngineerForm.ModelName;
+                    oImportDataModel.SetNameToCode();
+
                     // Create the PDM model.
-                    CreatePdmModelFromODataMetadata(reverseEngineerForm.ModelName, reverseEngineerForm.ODataMetadataUri, reverseEngineerForm.AuthenticationType, false);
+                    UpdatePdmModelFromODataMetadata(oImportDataModel, reverseEngineerForm.ODataMetadataUri, reverseEngineerForm.AuthenticationType);
                 }
                 else
                 {
@@ -243,16 +237,29 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
             // If there is a value in Comment, parse it into a ODataAutenticationType object.
             else if (!Enum.TryParse(oDataMetadataFile.Comment, out oDataAuthType))
             {
-                _logger.Error(string.Format("The model {0} doesn't have a OData metadata file!", pdmModel.DisplayName));
+                _logger.Error(string.Format("The model {0} OData metadata file doesn't contain a valid authentication type in the Comment field!", pdmModel.DisplayName));
                 return;
             }
 
-            // Create an in-memory model based on the OData metadata.
-            PdPDM.Model oImportDataModel = CreatePdmModelFromODataMetadata(pdmModel.Name, oDataMetadataFile.Location, oDataAuthType);
+            // Create an in-memory model based on the existing PDM model.
+            PdPDM.Model oImportDataModel = (PdPDM.Model)this._app.CreateModel(((int)PdPDM.PdPDM_Classes.cls_Model), "", OpenModelFlags.omf_Hidden);
+            // Set the name of the model.
+            oImportDataModel.Name = pdmModel.Name;
+            oImportDataModel.SetNameToCode();
+            // Copy the model options from the existing model to the new model.
+            oImportDataModel.ModelOptionsText = pdmModel.ModelOptionsText;
+            // Update the new model from the metadata feed.
+            UpdatePdmModelFromODataMetadata(oImportDataModel, oDataMetadataFile.Location, oDataAuthType);
 
             // Merge the created OData import data model into the target pdm model.
             _logger.Debug("Merging the OData metadata changes into the PDM model");
-            pdmModel.Merge(oImportDataModel, ((int)PdCommon.MergeActions.mrg_allchanges - (int)PdCommon.MergeActions.mrg_deleted - (int)PdCommon.MergeActions.mrg_remove));
+            if (!pdmModel.Merge(oImportDataModel, ((int)PdCommon.MergeActions.mrg_allchanges - (int)PdCommon.MergeActions.mrg_deleted - (int)PdCommon.MergeActions.mrg_remove)))
+            {
+                _logger.Error("The merge was aborted!");
+            } else
+            {
+                _logger.Info("The merge is completed succesfully");
+            }
 
             // Delete the the temporary model.
             oImportDataModel.delete();

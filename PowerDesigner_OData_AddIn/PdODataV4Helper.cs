@@ -60,9 +60,9 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
                     logger.Debug(string.Format(" {0}[Name={1}; Namespace={2}]", edmTypeKindName, structuredTypeElement.Name, structuredTypeElement.Namespace));
 
                     // Get or create the package for the entity type.
-                    PdPDM.Package pdmTypePackage = PdHelper.GetOrCreatePackage(pdmModel, structuredTypeElement.Namespace);
+                    PdPDM.Package pdmTypePackage = PdHelper.GetOrCreatePackage(pdmModel, structuredTypeElement.Namespace, logger);
                     // Get or create the user for the entity type.
-                    PdPDM.User pdmUser = PdHelper.GetOrCreateUser(pdmModel, structuredTypeElement.Namespace);
+                    PdPDM.User pdmUser = PdHelper.GetOrCreateUser(pdmModel, structuredTypeElement.Namespace, logger);
 
                     // Create a new PDM table object for the EntityType.
                     PdPDM.Table pdmTypeTable = (PdPDM.Table)pdmTypePackage.Tables.CreateNew();
@@ -88,7 +88,7 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
                 foreach (IEdmSchemaType structuredTypeElement in structuredTypeElements)
                 {
                     // Find the table which represents the underlying type.
-                    PdPDM.Package pdmEntityTypePackage = PdHelper.GetOrCreatePackage(pdmModel, structuredTypeElement.Namespace);
+                    PdPDM.Package pdmEntityTypePackage = PdHelper.GetOrCreatePackage(pdmModel, structuredTypeElement.Namespace, logger);
                     if (pdmEntityTypePackage == null)
                     {
                         logger.Error(string.Format("The type package '{0}' was not found!", structuredTypeElement.Namespace));
@@ -109,7 +109,7 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
 
                         IEdmEntityType targetedEntityType = navProp.ToEntityType();
                         // Find the table which represents the targeted type.
-                        PdPDM.Package pdmTargetEntityTypePackage = PdHelper.GetOrCreatePackage(pdmModel, targetedEntityType.Namespace);
+                        PdPDM.Package pdmTargetEntityTypePackage = PdHelper.GetOrCreatePackage(pdmModel, targetedEntityType.Namespace, logger);
                         if (pdmTargetEntityTypePackage == null)
                         {
                             logger.Error(string.Format("The targeted type package '{0}' was not found!", targetedEntityType.Namespace));
@@ -160,7 +160,7 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
 
                     // Now a table is created for the EntityType, we create a replica-table for the EntitySet.
                     // Get or create the user for the entity type.
-                    PdPDM.User pdmUser = PdHelper.GetOrCreateUser(pdmModel, edmEntitySet.Container.Namespace);
+                    PdPDM.User pdmUser = PdHelper.GetOrCreateUser(pdmModel, edmEntitySet.Container.Namespace, logger);
 
                     // Find the table which represents the underlying type.
                     PdPDM.Package pdmEntityTypePackage = PdHelper.GetPackage(pdmModel, entityType.Namespace);
@@ -199,13 +199,6 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
                     baseReplication.SetCollectionReplicated("ExtendedInfluences", false, false);
                     baseReplication.SetCollectionReplicated("OutgoingTraceabilityLinks", false, false);
                     baseReplication.SetCollectionReplicated("ExtendedDependencies", false, false);
-
-                    // Create a traceability link between the entity set table and it's underlying type.
-                    logger.Debug("  - Creating traceability link from entity set to entity.");
-                    PdCommon.ExtendedDependency extendedDependency = (PdCommon.ExtendedDependency)pdmModel.ChildTraceabilityLinks.CreateNew();
-                    extendedDependency.SourceObject = (PdCommon.NamedObject)pdmTable;
-                    extendedDependency.Stereotype = "EntitySet of Entity";
-                    extendedDependency.LinkedObject = (PdCommon.NamedObject)typeTable;
 
                     // Set the Name, Code, Stereotype, Owner and Generated properties of the repica.
                     logger.Debug("  - Setting Name, Code, Stereotype, Owner and Generated on replica-table");
