@@ -1,15 +1,30 @@
 ﻿using System;
+using System.CodeDom;
 
 namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
 {
     public class PdLogger
     {
+        // Set the name of the PowerDesigner variable to use, to enable the debug mode.
+        private static String DEBUG_MODE_VARIABLE_TEMPLATE = "%$ODATA_DEBUG_MODE%";
+
         // A reference to the PowerDesigner Application object.
         private PdCommon.Application _app;
 
         public PdLogger(PdCommon.Application app)
         {
             this._app = app;
+        }
+
+        /// <summary>
+        /// Function to check whether debug mode is eanbled.
+        /// </summary>
+        /// <returns></returns>
+        private bool IsDebugMode()
+        {
+            if (this._app.ActiveModel != null)
+                return (((PdCommon.BaseModel)this._app.ActiveModel).EvaluateText(DEBUG_MODE_VARIABLE_TEMPLATE).ToLower().Equals("true"));
+            return false;
         }
 
         /// <summary>
@@ -57,7 +72,9 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
         /// <param name="message">The debug message to write in the PowerDesigner output window</param>
         public void Debug(String message)
         {
-            this.Log(message, "DEBUG");
+            // Only write debug messages if debug mode is enabled.
+            if (this.IsDebugMode())
+                this.Log(message, "DEBUG");
         }
 
         /// <summary>
