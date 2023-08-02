@@ -248,6 +248,9 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
             oImportDataModel.SetNameToCode();
             // Copy the model options from the existing model to the new model.
             oImportDataModel.ModelOptionsText = pdmModel.ModelOptionsText;
+            // If the DBMS is set on the existing model, set the same DBMS on the import model.
+            if (pdmModel.DBMS != null)
+                oImportDataModel.DBMS = pdmModel.DBMS;
             // Update the new model from the metadata feed.
             UpdatePdmModelFromODataMetadata(oImportDataModel, oDataMetadataFile.Location, oDataAuthType);
 
