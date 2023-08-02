@@ -12,7 +12,7 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
     {
         // Name of the metadata file.
         const string ODATA_METADATA_FILE_NAME = "OData Metadata";
-        const string ODATA_METADATA_FILE_CODE = "ODATA_METADATA";
+        const string ODATA_METADATA_FILE_CODE = "OData_Metadata";
 
         /// <summary>
         /// A list of supported OData authentication methods.
@@ -46,7 +46,7 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
         /// <returns></returns>
         public static PdCommon.FileObject GetODataMetadataFile(PdPDM.Model pdmModel)
         {
-            var oDataMetadataFile = pdmModel.FindChildByCode(PdODataModelUpdater.ODATA_METADATA_FILE_CODE, (int)PdCommon.PdCommon_Classes.cls_FileObject);
+            var oDataMetadataFile = pdmModel.FindChildByCode(PdODataModelUpdater.ODATA_METADATA_FILE_CODE, (int)PdCommon.PdCommon_Classes.cls_FileObject, "", null, false, false);
             if (oDataMetadataFile == null)
             {
                 return null;
@@ -248,6 +248,9 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
             oImportDataModel.SetNameToCode();
             // Copy the model options from the existing model to the new model.
             oImportDataModel.ModelOptionsText = pdmModel.ModelOptionsText;
+            // If the DBMS is set on the existing model, set the same DBMS on the import model.
+            if (pdmModel.DBMS != null)
+                oImportDataModel.DBMS = pdmModel.DBMS;
             // Update the new model from the metadata feed.
             UpdatePdmModelFromODataMetadata(oImportDataModel, oDataMetadataFile.Location, oDataAuthType);
 

@@ -8,9 +8,9 @@
 An AddIn for PowerDesigner to synchronize OData metadata with a PDM model
 
 ## Installation
-In order to use the plugin, execute the MSI installer which can be downloaded as a build artifact on the latest stable [main build](https://github.com/CrossBreezeNL/PowerDesigner-OData-AddIn/actions/workflows/main.yml).
+In order to use the plugin, execute the MSI installer which can be downloaded from the asserts list from the latest [stable release](https://github.com/CrossBreezeNL/PowerDesigner-OData-AddIn/releases).
 
-Make sure to restart PowerDesigner after the installation. Then open Tools -> General Options -> Add-Ins and enable the 'OData' Add-In (by ticking the tick box before it).
+Make sure to restart PowerDesigner after the installation. Then open Tools > General Options > Add-Ins and enable the 'OData' Add-In (by ticking the tick box before it).
 
 ![General options - Add-In](./screenshots/general-options-addins.png)
 
@@ -18,12 +18,18 @@ Make sure to restart PowerDesigner after the installation. Then open Tools -> Ge
 In the following sections the usage of the Add In is explained.
 ### Reverse engineer OData
 In order to reverse engineer an OData service follow the following steps:
+
 1. In the main menu of PowerDesigner click on `File` > `Reverse Engineer` > `OData...`.
+
    ![PowerDesigner Reverse Engineer OData](./screenshots/file-reverse-engineer-odata.png)
+
 1. A model dialog will popup to ask for the new model name, the metadata URI and the authentication type. The new model name will be the name of the new Physical Data Model containing the structure of the OData service.
-  ![Reverse engineer OData to PDM](./screenshots/model-dialog-reverse-odata.png)
+
+   ![Reverse engineer OData to PDM](./screenshots/model-dialog-reverse-odata.png)
+
 1. If you have selected an authentication type other then `None` another model dialog will popup where you can pass the username and password.
-  ![OData authentcation](./screenshots/model-dialog-authentication.png)
+
+   ![OData authentcation](./screenshots/model-dialog-authentication.png)
 
 After the previous steps are completed a new PDM model will be created in the active workspace and will be populated with tables (with columns) based on the metadata of the OData service.
 
@@ -33,7 +39,7 @@ Next to the tables there will also be a file named 'OData Metadata', which is a 
 > The authentication information is not stored in the model. The authentication information will be asked for every time you update the model.
 
 ### Updating existing reverse engineered OData model
-For any physical data model which contains a file with the code 'ODATA_METADATA' the menu option `Update model from OData metadata` will be available.
+For any physical data model which contains a file with the code 'OData_Metadata' the menu option `Update model from OData metadata` will be available.
 
 ![Model menu update model](./screenshots/model-menu-update-option.png)
 
@@ -44,7 +50,7 @@ If the authentication type is not `None`, a dialog will popup where the authenti
 ### Manually adding OData Metadata file
 When you want to update an existing model which was not reverse engineered using the Reverse Engineer menu option, you can manually add the OData Metadata file. Follow the steps below to do so:
 1. Right-click on the model, choose `New` > `File`.
-1. Given the new file the `Name` 'OData Metadata' and the `Code` 'ODATA_METADATA'.
+1. Given the new file the `Name` 'OData Metadata' and the `Code` 'OData_Metadata'.
 1. Set the `Location type` to 'URL'.
 1. Set the `Location` to the URL to the $metadata location of the OData metadata service.
 1. Set the `Comment` value either to 'None' or 'Basic', depending on the required authentication method.
@@ -53,15 +59,18 @@ When you want to update an existing model which was not reverse engineered using
 
 ![Model OData Metadata file](./screenshots/model-metadata-file-properties.png)
 
-Once you have completed the above steps the update menu opion will be available as explained in [Updating existing reverse engineered OData model](#updating-existing-reverse-engineered-odata-model).
+Once you have completed the above steps the update menu option will be available as explained in [Updating existing reverse engineered OData model](#updating-existing-reverse-engineered-odata-model).
 
 ## Debugging
 To debug the plugin:
 
 - Open the [solution](./PowerDesigner_OData_AddIn.sln) in Visual Studio which is running as Administator (so it can register new DLLs)
 - Build the project in Debug (this will also register the Add-In in the Windows Registry for PowerDesigner).
+- Enable debug mode in PowerDesigner for the OData Add-In by creating a variable named 'ODATA_DEBUG_MODE' and give it the value 'True'.
 
-Now you can enable the Add-In in PowerDesigner in Tools -> General Options -> Add-Ins. The name of the Add-In is 'OData'. If the OData add-in is disabled in PowerDesigner (checkbox is grayed out) it might be needed to run PowerDesigner as Administrator.
+   ![Enable debug mode](./screenshots/general-options-debug-mode.png)
+
+Now you can enable the Add-In in PowerDesigner in Tools > General Options > Add-Ins. The name of the Add-In is 'OData'. If the OData add-in is disabled in PowerDesigner (checkbox is grayed out) it might be needed to run PowerDesigner as Administrator.
 
 ## Resources
 

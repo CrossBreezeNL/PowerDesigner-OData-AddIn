@@ -21,13 +21,13 @@ runs:
       run: msbuild -t:restore
     # Install GitVersion
     - name: Install GitVersion
-      uses: gittools/actions/gitversion/setup@v0.9.15
+      uses: gittools/actions/gitversion/setup@v0
       with:
-        versionSpec: '5.5.x'
+        versionSpec: '5.x'
     # Update the version numbers.
     - name: Determine Version
       id: gitversion # step id used as reference for output values
-      uses: gittools/actions/gitversion/execute@v0.9.15
+      uses: gittools/actions/gitversion/execute@v0
       with:
         updateAssemblyInfo: true
     # Build the solution (without installer).
