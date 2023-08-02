@@ -10,7 +10,7 @@ An AddIn for PowerDesigner to synchronize OData metadata with a PDM model
 ## Installation
 In order to use the plugin, execute the MSI installer which can be downloaded from the asserts list from the latest [stable release](https://github.com/CrossBreezeNL/PowerDesigner-OData-AddIn/releases).
 
-Make sure to restart PowerDesigner after the installation. Then open Tools -> General Options -> Add-Ins and enable the 'OData' Add-In (by ticking the tick box before it).
+Make sure to restart PowerDesigner after the installation. Then open Tools > General Options > Add-Ins and enable the 'OData' Add-In (by ticking the tick box before it).
 
 ![General options - Add-In](./screenshots/general-options-addins.png)
 
@@ -18,12 +18,18 @@ Make sure to restart PowerDesigner after the installation. Then open Tools -> Ge
 In the following sections the usage of the Add In is explained.
 ### Reverse engineer OData
 In order to reverse engineer an OData service follow the following steps:
+
 1. In the main menu of PowerDesigner click on `File` > `Reverse Engineer` > `OData...`.
+
    ![PowerDesigner Reverse Engineer OData](./screenshots/file-reverse-engineer-odata.png)
+
 1. A model dialog will popup to ask for the new model name, the metadata URI and the authentication type. The new model name will be the name of the new Physical Data Model containing the structure of the OData service.
-  ![Reverse engineer OData to PDM](./screenshots/model-dialog-reverse-odata.png)
+
+   ![Reverse engineer OData to PDM](./screenshots/model-dialog-reverse-odata.png)
+
 1. If you have selected an authentication type other then `None` another model dialog will popup where you can pass the username and password.
-  ![OData authentcation](./screenshots/model-dialog-authentication.png)
+
+   ![OData authentcation](./screenshots/model-dialog-authentication.png)
 
 After the previous steps are completed a new PDM model will be created in the active workspace and will be populated with tables (with columns) based on the metadata of the OData service.
 
@@ -61,9 +67,10 @@ To debug the plugin:
 - Open the [solution](./PowerDesigner_OData_AddIn.sln) in Visual Studio which is running as Administator (so it can register new DLLs)
 - Build the project in Debug (this will also register the Add-In in the Windows Registry for PowerDesigner).
 - Enable debug mode in PowerDesigner for the OData Add-In by creating a variable named 'ODATA_DEBUG_MODE' and give it the value 'True'.
-  ![Enable debug mode](./screenshots/general-options-debug-mode.png)
 
-Now you can enable the Add-In in PowerDesigner in Tools -> General Options -> Add-Ins. The name of the Add-In is 'OData'. If the OData add-in is disabled in PowerDesigner (checkbox is grayed out) it might be needed to run PowerDesigner as Administrator.
+   ![Enable debug mode](./screenshots/general-options-debug-mode.png)
+
+Now you can enable the Add-In in PowerDesigner in Tools > General Options > Add-Ins. The name of the Add-In is 'OData'. If the OData add-in is disabled in PowerDesigner (checkbox is grayed out) it might be needed to run PowerDesigner as Administrator.
 
 ## Resources
 
