@@ -5,6 +5,7 @@ using System.Xml.Linq;
 using System.Windows.Forms;
 using CrossBreeze.Tools.PowerDesigner.AddIn.OData.Forms;
 using PdCommon;
+using PdPDM;
 
 namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
 {
@@ -250,7 +251,15 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
             oImportDataModel.ModelOptionsText = pdmModel.ModelOptionsText;
             // If the DBMS is set on the existing model, set the same DBMS on the import model.
             if (pdmModel.DBMS != null)
-                oImportDataModel.DBMS = pdmModel.DBMS;
+            {
+                DBMS targetDBMS = (PdPDM.DBMS)pdmModel.DBMS;
+                // Chech whether the target DBMS is different, cause setting the DBMS to the same results in an error during merge.
+                if (oImportDataModel.DBMS == null || !((PdPDM.DBMS)oImportDataModel.DBMS).Name.Equals(targetDBMS.Name))
+                {
+                    _logger.Debug(string.Format("Updating DBMS to target model DBMS {0}.", targetDBMS.Name));
+                    oImportDataModel.DBMS = pdmModel.DBMS;
+                }
+            }
             // Update the new model from the metadata feed.
             UpdatePdmModelFromODataMetadata(oImportDataModel, oDataMetadataFile.Location, oDataAuthType);
 
