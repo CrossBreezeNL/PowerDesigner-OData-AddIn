@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Net;
+using System.Text;
 using System.Xml;
 using System.Xml.Linq;
 using System.Windows.Forms;
@@ -103,8 +104,12 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
                     // Open the authentication form with the PowerDesigner windows being the owner.
                     // If the result of the dialog was OK, we can fetch the authentication information.
                     if (authForm.ShowDialog(PdAppHelper.GetPDWindow(this._app)) == DialogResult.OK) {
-                        metadataRequest.Credentials = new NetworkCredential(authForm.Username, authForm.Password);
-                        _logger.Debug("Succesfully set authentication information for web-request.");
+                        // Send the Basic authorization header preemptively. When only setting Credentials, .NET waits for a 401 challenge
+                        // and then picks the strongest scheme offered (Negotiate/NTLM before Basic), which fails on servers offering multiple schemes
+                        // or not sending a 'WWW-Authenticate: Basic' challenge.
+                        string basicAuthToken = Convert.ToBase64String(Encoding.UTF8.GetBytes(string.Format("{0}:{1}", authForm.Username, authForm.Password)));
+                        metadataRequest.Headers[HttpRequestHeader.Authorization] = string.Format("Basic {0}", basicAuthToken);
+                        _logger.Debug(string.Format("Succesfully set Basic authentication information for web-request (Username='{0}').", authForm.Username));
                     }
                     // If in the dialog the cancel button was pressed, we stop the reverse engineering process.
                     else
@@ -116,7 +121,7 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
             // The only other authentication method is NONE, for which we don't have to do anything.
 
             // Get the response from the metadata request.
-            using (WebResponse metadataResponse = metadataRequest.GetResponse())
+            using (WebResponse metadataResponse = GetMetadataResponse(metadataRequest))
             {
                 // Load the OData metadata into an XDocument.
                 XDocument oDataMetadataDocument = XDocument.Load(metadataResponse.GetResponseStream());
@@ -175,6 +180,27 @@ namespace CrossBreeze.Tools.PowerDesigner.AddIn.OData
 
             // Update the all diagrams in the model.
             PdHelper.UpdateDiagramRecursively(oImportDataModel);
+        }
+
+        /// <summary>
+        /// Execute the metadata request, and when it fails with a HTTP error, throw an exception containing the details the server responded with.
+        /// </summary>
+        /// <param name="metadataRequest">The request to execute.</param>
+        /// <returns></returns>
+        private WebResponse GetMetadataResponse(WebRequest metadataRequest)
+        {
+            try
+            {
+                return metadataRequest.GetResponse();
+            }
+            catch (WebException e) when (e.Response is HttpWebResponse errorResponse)
+            {
+                using (errorResponse)
+                {
+                    throw new PdODataException(string.Format("The request for the OData metadata at '{0}' failed with HTTP {1} ({2}) [ResponseUri='{3}'; WWW-Authenticate='{4}'; Authorization header sent={5}].",
+                        metadataRequest.RequestUri, (int)errorResponse.StatusCode, errorResponse.StatusDescription, errorResponse.ResponseUri, errorResponse.Headers[HttpResponseHeader.WwwAuthenticate], metadataRequest.Headers[HttpRequestHeader.Authorization] != null));
+                }
+            }
         }
 
         /// <summary>

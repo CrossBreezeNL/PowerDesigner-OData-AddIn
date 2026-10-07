@@ -67,6 +67,10 @@ To debug the plugin:
 - Open the [solution](./PowerDesigner_OData_AddIn.sln) in Visual Studio which is running as Administator (so it can register new DLLs)
 - Build the project in Debug (this will also register the Add-In in the Windows Registry for PowerDesigner).
 - Enable debug mode in PowerDesigner for the OData Add-In by creating a variable named 'ODATA_DEBUG_MODE' and give it the value 'True'.
+- If you have the add in installed, be sure to remove it first.
+- Start both PowerDesigner and VS as administrator.
+- In VS, select Debug --> Attached to runnig process.
+- Now when you do an odata operation in PowerDesigner the breakpoints will hit.
 
    ![Enable debug mode](./screenshots/general-options-debug-mode.png)
 
